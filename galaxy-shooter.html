@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>갤럭시 비행기 게임</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        
+        #gameContainer {
+            text-align: center;
+        }
+        
+        canvas {
+            border: 2px solid #333;
+            background: linear-gradient(to bottom, #001122, #000033);
+        }
+        
+        #ui {
+            color: white;
+            margin-top: 10px;
+        }
+        
+        #score {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        
+        #gaugeContainer {
+            margin-bottom: 10px;
+        }
+        
+        #gauge {
+            width: 200px;
+            height: 20px;
+            border: 2px solid #fff;
+            background: #333;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #gaugeFill {
+            height: 100%;
+            background: linear-gradient(to right, #ff0000, #ffff00, #00ff00);
+            width: 0%;
+            transition: width 0.2s;
+        }
+        
+        #gaugeText {
+            color: white;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        #inventory {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .item-slot {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #666;
+            background: #222;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .item-slot.filled {
+            border-color: #00ff00;
+            background: #004400;
+        }
+        
+        #gameOver {
+            display: none;
+            color: red;
+            font-size: 24px;
+            margin-top: 20px;
+        }
+        
+        #pauseScreen {
+            display: none;
+            color: white;
+            font-size: 24px;
+            margin-top: 20px;
+        }
+        
+        button {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        
+        button:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui">
+            <div id="score">점수: 0</div>
+            <div id="gaugeContainer">
+                <div id="gauge">
+                    <div id="gaugeFill"></div>
+                </div>
+                <div id="gaugeText">필살기 게이지: 0%</div>
+            </div>
+            <div id="inventory">
+                <div class="item-slot" id="slot0"></div>
+                <div class="item-slot" id="slot1"></div>
+            </div>
+            <div>방향키로 이동, Z키로 필살기, P키로 일시정지</div>
+            <div id="pauseScreen">
+                <div>게임 일시정지</div>
+                <div style="font-size: 16px; margin-top: 10px;">P키를 눌러 계속</div>
+            </div>
+            <div id="gameOver">
+                <div>게임 오버!</div>
+                <button onclick="restartGame()">다시 시작</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameRunning = true;
+        let gamePaused = false;
+        let score = 0;
+        let specialGauge = 0;
+        let maxGauge = 100;
+        let specialAttackActive = false;
+        let specialAttackTimer = 0;
+        let playerItems = [];
+        let maxItems = 2;
+        let multiShotActive = false;
+        let rapidFireActive = false;
+        let pierceActive = false;
+        let homingActive = false;
+        let itemEffectTimers = {
+            multiShot: 0,
+            rapidFire: 0,
+            pierce: 0,
+            homing: 0
+        };
+        let sidekicks = [];
+        let maxSidekicks = 2;
+        let lastSidekickShot = 0;
+        let explosions = [];
+        let difficultyLevel = 1;
+        let maxDifficultyLevel = 20;
+        let baseEnemySpawnRate = 45;
+        let currentEnemySpawnRate = 42;
+        let basePlayerSpeed = 5;
+        let currentPlayerSpeed = 5.15;
+        let baseShotDelay = 150;
+        let currentShotDelay = 146;
+        let enemySpeedMultiplier = 1.05;
+        
+        const keys = {
+            left: false,
+            right: false,
+            up: false,
+            down: false,
+            space: false,
+            z: false
+        };
+        
+        let pKeyPressed = false;
+        
+        class GameObject {
+            constructor(x, y, width, height, color) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.color = color;
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+            
+            collidesWith(other) {
+                return this.x < other.x + other.width &&
+                       this.x + this.width > other.x &&
+                       this.y < other.y + other.height &&
+                       this.y + this.height > other.y;
+            }
+        }
+        
+        class Player extends GameObject {
+            constructor() {
+                super(canvas.width / 2 - 20, canvas.height - 60, 40, 50, '#00ff00');
+                this.baseSpeed = 5;
+            }
+            
+            update() {
+                const speed = currentPlayerSpeed;
+                if (keys.left && this.x > 0) {
+                    this.x -= speed;
+                }
+                if (keys.right && this.x < canvas.width - this.width) {
+                    this.x += speed;
+                }
+                if (keys.up && this.y > 0) {
+                    this.y -= speed;
+                }
+                if (keys.down && this.y < canvas.height - this.height) {
+                    this.y += speed;
+                }
+            }
+            
+            draw() {
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+                
+                // Engine flames
+                ctx.fillStyle = '#ff6600';
+                ctx.beginPath();
+                ctx.ellipse(centerX - 8, this.y + this.height + 5, 3, 8, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(centerX + 8, this.y + this.height + 5, 3, 8, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffff00';
+                ctx.beginPath();
+                ctx.ellipse(centerX - 8, this.y + this.height + 3, 2, 5, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(centerX + 8, this.y + this.height + 3, 2, 5, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Main body (metallic blue)
+                ctx.fillStyle = '#4A90E2';
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY, 8, 20, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Nose cone (bright silver)
+                ctx.fillStyle = '#C0C0C0';
+                ctx.beginPath();
+                ctx.moveTo(centerX, this.y);
+                ctx.lineTo(centerX - 6, this.y + 15);
+                ctx.lineTo(centerX + 6, this.y + 15);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Wings (darker blue)
+                ctx.fillStyle = '#2E5C8A';
+                ctx.beginPath();
+                ctx.moveTo(this.x, centerY + 5);
+                ctx.lineTo(this.x - 10, centerY + 15);
+                ctx.lineTo(this.x + 5, centerY + 15);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width, centerY + 5);
+                ctx.lineTo(this.x + this.width + 10, centerY + 15);
+                ctx.lineTo(this.x + this.width - 5, centerY + 15);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Cockpit (bright cyan)
+                ctx.fillStyle = '#00FFFF';
+                ctx.beginPath();
+                ctx.ellipse(centerX, this.y + 12, 4, 6, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Wing details (green lights)
+                ctx.fillStyle = '#00FF00';
+                ctx.beginPath();
+                ctx.ellipse(this.x - 5, centerY + 10, 2, 2, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width + 5, centerY + 10, 2, 2, 0, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+        
+        class Bullet extends GameObject {
+            constructor(x, y, isHoming = false, isPierce = false) {
+                super(x, y, 4, 10, '#ffff00');
+                this.speed = 8;
+                this.isHoming = isHoming;
+                this.isPierce = isPierce;
+                this.hitEnemies = [];
+            }
+            
+            update() {
+                if (this.isHoming && enemies.length > 0) {
+                    let nearestEnemy = enemies[0];
+                    let minDistance = this.distanceTo(nearestEnemy);
+                    
+                    enemies.forEach(enemy => {
+                        const distance = this.distanceTo(enemy);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            nearestEnemy = enemy;
+                        }
+                    });
+                    
+                    const dx = (nearestEnemy.x + nearestEnemy.width/2) - (this.x + this.width/2);
+                    const dy = (nearestEnemy.y + nearestEnemy.height/2) - (this.y + this.height/2);
+                    const distance = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (distance > 0) {
+                        this.x += (dx / distance) * this.speed * 0.3;
+                        this.y += (dy / distance) * this.speed * 0.3;
+                    }
+                } else {
+                    this.y -= this.speed;
+                }
+            }
+            
+            distanceTo(enemy) {
+                const dx = (enemy.x + enemy.width/2) - (this.x + this.width/2);
+                const dy = (enemy.y + enemy.height/2) - (this.y + this.height/2);
+                return Math.sqrt(dx*dx + dy*dy);
+            }
+            
+            draw() {
+                if (this.isHoming) {
+                    ctx.fillStyle = '#ff00ff';
+                } else if (this.isPierce) {
+                    ctx.fillStyle = '#00ffff';
+                } else {
+                    ctx.fillStyle = '#ffff00';
+                }
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+        }
+        
+        class Enemy extends GameObject {
+            constructor(x, y) {
+                super(x, y, 30, 35, '#ff0000');
+                this.baseSpeed = 2 + Math.random() * 2;
+                this.speed = this.baseSpeed * enemySpeedMultiplier;
+                this.type = Math.floor(Math.random() * 3);
+            }
+            
+            update() {
+                this.y += this.speed;
+            }
+            
+            draw() {
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+                
+                if (this.type === 0) {
+                    // Red enemy - aggressive design
+                    ctx.fillStyle = '#8B0000';
+                    ctx.beginPath();
+                    ctx.ellipse(centerX, centerY, 10, 15, 0, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#FF0000';
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, this.y + this.height);
+                    ctx.lineTo(centerX - 8, this.y + 5);
+                    ctx.lineTo(centerX + 8, this.y + 5);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#FF4500';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, centerY - 5);
+                    ctx.lineTo(this.x - 8, centerY);
+                    ctx.lineTo(this.x + 3, centerY + 5);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width, centerY - 5);
+                    ctx.lineTo(this.x + this.width + 8, centerY);
+                    ctx.lineTo(this.x + this.width - 3, centerY + 5);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                } else if (this.type === 1) {
+                    // Purple enemy - sleek design
+                    ctx.fillStyle = '#4B0082';
+                    ctx.beginPath();
+                    ctx.ellipse(centerX, centerY, 8, 16, 0, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#8A2BE2';
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, this.y + this.height);
+                    ctx.lineTo(centerX - 6, this.y);
+                    ctx.lineTo(centerX + 6, this.y);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#9932CC';
+                    ctx.beginPath();
+                    ctx.ellipse(this.x + 3, centerY, 3, 8, Math.PI / 4, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(this.x + this.width - 3, centerY, 3, 8, -Math.PI / 4, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                } else {
+                    // Orange enemy - heavy design
+                    ctx.fillStyle = '#CC4400';
+                    ctx.fillRect(centerX - 8, this.y + 5, 16, 25);
+                    
+                    ctx.fillStyle = '#FF6600';
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, this.y + this.height);
+                    ctx.lineTo(centerX - 10, this.y + 10);
+                    ctx.lineTo(centerX - 5, this.y);
+                    ctx.lineTo(centerX + 5, this.y);
+                    ctx.lineTo(centerX + 10, this.y + 10);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#FF8C00';
+                    ctx.fillRect(this.x - 5, centerY - 3, 8, 6);
+                    ctx.fillRect(this.x + this.width - 3, centerY - 3, 8, 6);
+                }
+                
+                // Enemy engine glow
+                ctx.fillStyle = '#FF0000';
+                ctx.globalAlpha = 0.6;
+                ctx.beginPath();
+                ctx.ellipse(centerX, this.y + this.height + 3, 4, 6, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+        
+        class Star {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.speed = 1 + Math.random() * 2;
+                this.size = Math.random() * 2;
+            }
+            
+            update() {
+                this.y += this.speed;
+                if (this.y > canvas.height) {
+                    this.y = 0;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+            
+            draw() {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+            }
+        }
+        
+        class Item extends GameObject {
+            constructor(x, y) {
+                super(x, y, 20, 20, '#00ff00');
+                this.speed = 3;
+                this.types = ['multiShot', 'rapidFire', 'pierce', 'homing'];
+                this.type = this.types[Math.floor(Math.random() * this.types.length)];
+                this.colors = {
+                    multiShot: '#ff6600',
+                    rapidFire: '#ff0066',
+                    pierce: '#00ffff',
+                    homing: '#ff00ff'
+                };
+                this.symbols = {
+                    multiShot: 'M',
+                    rapidFire: 'R',
+                    pierce: 'P',
+                    homing: 'H'
+                };
+                this.color = this.colors[this.type];
+            }
+            
+            update() {
+                this.y += this.speed;
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.symbols[this.type], this.x + this.width/2, this.y + this.height/2 + 4);
+                ctx.textAlign = 'left';
+                
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(this.x - 1, this.y - 1, this.width + 2, this.height + 2);
+            }
+        }
+        
+        class Explosion {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.particles = [];
+                this.timer = 0;
+                this.maxTimer = 20;
+                
+                for (let i = 0; i < 8; i++) {
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 8,
+                        vy: (Math.random() - 0.5) * 8,
+                        life: 1.0
+                    });
+                }
+            }
+            
+            update() {
+                this.timer++;
+                this.particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    particle.vx *= 0.95;
+                    particle.vy *= 0.95;
+                    particle.life -= 0.05;
+                });
+            }
+            
+            draw() {
+                this.particles.forEach(particle => {
+                    if (particle.life > 0) {
+                        ctx.globalAlpha = particle.life;
+                        ctx.fillStyle = `hsl(${30 + Math.random() * 30}, 100%, 60%)`;
+                        ctx.beginPath();
+                        ctx.arc(particle.x, particle.y, 3, 0, 2 * Math.PI);
+                        ctx.fill();
+                        ctx.globalAlpha = 1.0;
+                    }
+                });
+            }
+            
+            isDead() {
+                return this.timer >= this.maxTimer;
+            }
+        }
+        
+        class Sidekick extends GameObject {
+            constructor(side) {
+                super(0, 0, 15, 20, '#00aa00');
+                this.side = side;
+                if (side === 'left') {
+                    this.offsetX = -30;
+                    this.offsetY = 10;
+                } else {
+                    this.offsetX = 30;
+                    this.offsetY = 10;
+                }
+            }
+            
+            update(playerX, playerY) {
+                // 플레이어 기체의 중심에서 계산
+                const playerCenterX = playerX + 20;
+                const playerCenterY = playerY + 25;
+                
+                this.x = playerCenterX + this.offsetX - this.width / 2;
+                this.y = playerCenterY + this.offsetY - this.height / 2;
+            }
+            
+            draw() {
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+                
+                // Main body (green)
+                ctx.fillStyle = '#00AA00';
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY, 6, 8, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Wing (darker green)
+                ctx.fillStyle = '#007700';
+                if (this.side === 'left') {
+                    ctx.beginPath();
+                    ctx.moveTo(this.x - 3, centerY);
+                    ctx.lineTo(this.x + 3, centerY - 5);
+                    ctx.lineTo(this.x + 3, centerY + 5);
+                    ctx.closePath();
+                    ctx.fill();
+                } else {
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width + 3, centerY);
+                    ctx.lineTo(this.x + this.width - 3, centerY - 5);
+                    ctx.lineTo(this.x + this.width - 3, centerY + 5);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                // Engine (bright green)
+                ctx.fillStyle = '#00FF00';
+                ctx.beginPath();
+                ctx.ellipse(centerX, this.y + this.height + 2, 2, 4, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Core (cyan)
+                ctx.fillStyle = '#00FFAA';
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY, 3, 4, 0, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+        
+        const player = new Player();
+        const bullets = [];
+        const enemies = [];
+        const stars = [];
+        const items = [];
+        const sidekickBullets = [];
+        
+        for (let i = 0; i < 50; i++) {
+            stars.push(new Star());
+        }
+        
+        let lastShot = 0;
+        let enemySpawnTimer = 0;
+        let itemSpawnTimer = 0;
+        
+        function spawnEnemy() {
+            const x = Math.random() * (canvas.width - 25);
+            enemies.push(new Enemy(x, -25));
+        }
+        
+        function updateDifficulty() {
+            const newDifficultyLevel = Math.min(Math.floor(score / 500) + 1, maxDifficultyLevel);
+            
+            if (newDifficultyLevel > difficultyLevel) {
+                difficultyLevel = newDifficultyLevel;
+                
+                // 적 스폰 속도 (단계별 3프레임 감소, 최소 8프레임)
+                currentEnemySpawnRate = Math.max(8, baseEnemySpawnRate - (difficultyLevel * 3));
+                
+                // 적 이동 속도 (단계별 5% 증가, 최대 2배)
+                enemySpeedMultiplier = Math.min(2.0, 1.0 + (difficultyLevel * 0.05));
+                
+                // 플레이어 이동 속도 (단계별 3% 증가, 최대 1.6배)
+                currentPlayerSpeed = Math.min(basePlayerSpeed * 1.6, basePlayerSpeed * (1.0 + difficultyLevel * 0.03));
+                
+                // 플레이어 샇 속도 (단계별 4ms 감소, 최소 50ms)
+                currentShotDelay = rapidFireActive ? 
+                    Math.max(25, baseShotDelay - (difficultyLevel * 4)) / 3 : 
+                    Math.max(50, baseShotDelay - (difficultyLevel * 4));
+                
+                // 난이도 증가 알림
+                showDifficultyMessage();
+            }
+        }
+        
+        function showDifficultyMessage() {
+            // 화면에 잠깐 난이도 증가 메시지 표시
+            const message = document.createElement('div');
+            const isMaxLevel = difficultyLevel >= maxDifficultyLevel;
+            message.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: ${isMaxLevel ? '#ff0000' : '#ff6600'};
+                font-size: ${isMaxLevel ? '32px' : '28px'};
+                font-weight: bold;
+                z-index: 1000;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                pointer-events: none;
+            `;
+            
+            if (isMaxLevel) {
+                message.textContent = '최고 난이도 달성!';
+            } else {
+                message.textContent = `난이도 ${difficultyLevel}단계!`;
+            }
+            
+            document.body.appendChild(message);
+            
+            setTimeout(() => {
+                if (document.body.contains(message)) {
+                    document.body.removeChild(message);
+                }
+            }, isMaxLevel ? 3000 : 2000);
+        }
+        
+        function update() {
+            if (!gameRunning || gamePaused) return;
+            
+            player.update();
+            
+            if (Date.now() - lastShot > currentShotDelay) {
+                if (multiShotActive) {
+                    bullets.push(new Bullet(player.x + player.width / 2 - 2, player.y - 5, homingActive, pierceActive));
+                    bullets.push(new Bullet(player.x + player.width / 2 - 10, player.y - 5, homingActive, pierceActive));
+                    bullets.push(new Bullet(player.x + player.width / 2 + 6, player.y - 5, homingActive, pierceActive));
+                } else {
+                    bullets.push(new Bullet(player.x + player.width / 2 - 2, player.y - 5, homingActive, pierceActive));
+                }
+                lastShot = Date.now();
+            }
+            
+            // Sidekick shooting
+            if (Date.now() - lastSidekickShot > 200 && sidekicks.length > 0) {
+                sidekicks.forEach(sidekick => {
+                    sidekickBullets.push(new Bullet(sidekick.x + sidekick.width / 2 - 2, sidekick.y - 5));
+                });
+                lastSidekickShot = Date.now();
+            }
+            
+            // Update sidekicks
+            sidekicks.forEach(sidekick => {
+                sidekick.update(player.x, player.y);
+            });
+            
+            if (keys.z && specialGauge >= maxGauge && !specialAttackActive) {
+                activateSpecialAttack();
+            }
+            
+            bullets.forEach((bullet, bulletIndex) => {
+                bullet.update();
+                if (bullet.y < 0) {
+                    bullets.splice(bulletIndex, 1);
+                }
+            });
+            
+            sidekickBullets.forEach((bullet, bulletIndex) => {
+                bullet.update();
+                if (bullet.y < 0) {
+                    sidekickBullets.splice(bulletIndex, 1);
+                }
+            });
+            
+            enemies.forEach((enemy, enemyIndex) => {
+                enemy.update();
+                if (enemy.y > canvas.height) {
+                    enemies.splice(enemyIndex, 1);
+                }
+                
+                if (player.collidesWith(enemy)) {
+                    gameOver();
+                }
+                
+                // Check sidekick collisions
+                sidekicks.forEach((sidekick, sidekickIndex) => {
+                    if (sidekick.collidesWith(enemy)) {
+                        createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                        sidekicks.splice(sidekickIndex, 1);
+                        enemies.splice(enemyIndex, 1);
+                        score += 5;
+                        updateScore();
+                    }
+                });
+                
+                bullets.forEach((bullet, bulletIndex) => {
+                    if (bullet.collidesWith(enemy) && !bullet.hitEnemies.includes(enemy)) {
+                        if (bullet.isPierce) {
+                            bullet.hitEnemies.push(enemy);
+                        } else {
+                            bullets.splice(bulletIndex, 1);
+                        }
+                        createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                        enemies.splice(enemyIndex, 1);
+                        score += 10;
+                        specialGauge = Math.min(specialGauge + 5, maxGauge);
+                        updateScore();
+                        updateGauge();
+                    }
+                });
+                
+                sidekickBullets.forEach((bullet, bulletIndex) => {
+                    if (bullet.collidesWith(enemy)) {
+                        createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                        sidekickBullets.splice(bulletIndex, 1);
+                        enemies.splice(enemyIndex, 1);
+                        score += 10;
+                        specialGauge = Math.min(specialGauge + 3, maxGauge);
+                        updateScore();
+                        updateGauge();
+                    }
+                });
+            });
+            
+            stars.forEach(star => star.update());
+            
+            items.forEach((item, itemIndex) => {
+                item.update();
+                if (item.y > canvas.height) {
+                    items.splice(itemIndex, 1);
+                }
+                
+                if (player.collidesWith(item)) {
+                    collectItem(item);
+                    items.splice(itemIndex, 1);
+                }
+            });
+            
+            updateItemEffects();
+            updateDifficulty();
+            
+            explosions.forEach((explosion, index) => {
+                explosion.update();
+                if (explosion.isDead()) {
+                    explosions.splice(index, 1);
+                }
+            });
+            
+            if (specialAttackActive) {
+                specialAttackTimer++;
+                if (specialAttackTimer > 60) {
+                    specialAttackActive = false;
+                    specialAttackTimer = 0;
+                }
+            }
+            
+            enemySpawnTimer++;
+            if (enemySpawnTimer > currentEnemySpawnRate) {
+                spawnEnemy();
+                enemySpawnTimer = 0;
+                
+                // 난이도에 따른 다중 스폰 (더 세밀한 단계별 조정)
+                const multiSpawnChance = Math.min(0.4, difficultyLevel * 0.02);
+                
+                if (difficultyLevel >= 3 && Math.random() < multiSpawnChance) {
+                    setTimeout(() => {
+                        const x2 = Math.random() * (canvas.width - 25);
+                        enemies.push(new Enemy(x2, -25));
+                    }, 80);
+                }
+                
+                if (difficultyLevel >= 7 && Math.random() < multiSpawnChance * 0.7) {
+                    setTimeout(() => {
+                        const x3 = Math.random() * (canvas.width - 25);
+                        enemies.push(new Enemy(x3, -25));
+                    }, 160);
+                }
+                
+                if (difficultyLevel >= 12 && Math.random() < multiSpawnChance * 0.5) {
+                    setTimeout(() => {
+                        const x4 = Math.random() * (canvas.width - 25);
+                        enemies.push(new Enemy(x4, -25));
+                    }, 240);
+                }
+                
+                if (difficultyLevel >= 17 && Math.random() < multiSpawnChance * 0.3) {
+                    setTimeout(() => {
+                        const x5 = Math.random() * (canvas.width - 25);
+                        enemies.push(new Enemy(x5, -25));
+                    }, 320);
+                }
+            }
+            
+            itemSpawnTimer++;
+            // 난이도가 높을수록 아이템 스폰 빈도 증가
+            const itemSpawnDelay = Math.max(150, 350 - (difficultyLevel * 15));
+            if (itemSpawnTimer > itemSpawnDelay + Math.random() * 150) {
+                spawnItem();
+                itemSpawnTimer = 0;
+            }
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            stars.forEach(star => star.draw());
+            
+            player.draw();
+            bullets.forEach(bullet => bullet.draw());
+            sidekickBullets.forEach(bullet => bullet.draw());
+            enemies.forEach(enemy => enemy.draw());
+            items.forEach(item => item.draw());
+            sidekicks.forEach(sidekick => sidekick.draw());
+            explosions.forEach(explosion => explosion.draw());
+            
+            if (specialAttackActive) {
+                drawSpecialAttackEffect();
+            }
+        }
+        
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // 게임 시작 시 1단계 설정 초기화
+        function initializeGame() {
+            difficultyLevel = 1;
+            currentEnemySpawnRate = Math.max(8, baseEnemySpawnRate - (1 * 3));
+            currentPlayerSpeed = Math.min(basePlayerSpeed * 1.6, basePlayerSpeed * (1.0 + 1 * 0.03));
+            currentShotDelay = Math.max(50, baseShotDelay - (1 * 4));
+            enemySpeedMultiplier = Math.min(2.0, 1.0 + (1 * 0.05));
+        }
+        
+        function updateScore() {
+            document.getElementById('score').textContent = `점수: ${score}`;
+        }
+        
+        function updateGauge() {
+            const percentage = (specialGauge / maxGauge) * 100;
+            document.getElementById('gaugeFill').style.width = percentage + '%';
+            document.getElementById('gaugeText').textContent = `필살기 게이지: ${Math.floor(percentage)}%`;
+        }
+        
+        function activateSpecialAttack() {
+            specialAttackActive = true;
+            specialGauge = 0;
+            updateGauge();
+            
+            enemies.forEach((enemy, index) => {
+                createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                score += 50;
+            });
+            enemies.length = 0;
+            updateScore();
+        }
+        
+        function createExplosion(x, y) {
+            explosions.push(new Explosion(x, y));
+        }
+        
+        function togglePause() {
+            gamePaused = !gamePaused;
+            document.getElementById('pauseScreen').style.display = gamePaused ? 'block' : 'none';
+        }
+        
+        function handlePauseKey() {
+            if (!pKeyPressed) {
+                pKeyPressed = true;
+                togglePause();
+            }
+        }
+        
+        function spawnItem() {
+            const x = Math.random() * (canvas.width - 20);
+            items.push(new Item(x, -20));
+        }
+        
+        function collectItem(item) {
+            if (playerItems.length < maxItems) {
+                playerItems.push({
+                    type: item.type,
+                    timeLeft: 10000,
+                    symbol: item.symbols[item.type],
+                    color: item.colors[item.type]
+                });
+                updateInventoryUI();
+                activateItemEffect(item.type);
+                
+                // Add sidekick when collecting item
+                addSidekick();
+            }
+        }
+        
+        function addSidekick() {
+            if (sidekicks.length < maxSidekicks) {
+                const hasLeft = sidekicks.some(s => s.side === 'left');
+                const hasRight = sidekicks.some(s => s.side === 'right');
+                
+                if (!hasLeft) {
+                    sidekicks.push(new Sidekick('left'));
+                } else if (!hasRight) {
+                    sidekicks.push(new Sidekick('right'));
+                }
+            }
+        }
+        
+        function activateItemEffect(type) {
+            switch(type) {
+                case 'multiShot':
+                    multiShotActive = true;
+                    itemEffectTimers.multiShot = 10000;
+                    break;
+                case 'rapidFire':
+                    rapidFireActive = true;
+                    itemEffectTimers.rapidFire = 10000;
+                    // 연사 아이템 활성시 쇇 속도 재계산
+                    currentShotDelay = Math.max(25, baseShotDelay - (difficultyLevel * 4)) / 3;
+                    break;
+                case 'pierce':
+                    pierceActive = true;
+                    itemEffectTimers.pierce = 10000;
+                    break;
+                case 'homing':
+                    homingActive = true;
+                    itemEffectTimers.homing = 10000;
+                    break;
+            }
+        }
+        
+        function updateItemEffects() {
+            for (let type in itemEffectTimers) {
+                if (itemEffectTimers[type] > 0) {
+                    itemEffectTimers[type] -= 16;
+                    if (itemEffectTimers[type] <= 0) {
+                        switch(type) {
+                            case 'multiShot':
+                                multiShotActive = false;
+                                break;
+                            case 'rapidFire':
+                                rapidFireActive = false;
+                                // 연사 아이템 비활성시 쇇 속도 재계산
+                                currentShotDelay = Math.max(50, baseShotDelay - (difficultyLevel * 4));
+                                break;
+                            case 'pierce':
+                                pierceActive = false;
+                                break;
+                            case 'homing':
+                                homingActive = false;
+                                break;
+                        }
+                        removeItemFromInventory(type);
+                    }
+                }
+            }
+        }
+        
+        function removeItemFromInventory(type) {
+            playerItems = playerItems.filter(item => item.type !== type);
+            updateInventoryUI();
+        }
+        
+        function updateInventoryUI() {
+            for (let i = 0; i < maxItems; i++) {
+                const slot = document.getElementById(`slot${i}`);
+                if (i < playerItems.length) {
+                    slot.textContent = playerItems[i].symbol;
+                    slot.style.color = playerItems[i].color;
+                    slot.classList.add('filled');
+                } else {
+                    slot.textContent = '';
+                    slot.classList.remove('filled');
+                }
+            }
+        }
+        
+        function drawSpecialAttackEffect() {
+            const alpha = 0.3 + Math.sin(specialAttackTimer * 0.5) * 0.2;
+            ctx.fillStyle = `rgba(255, 255, 0, ${alpha})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = 'white';
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('필살기 발동!', canvas.width / 2, canvas.height / 2);
+            ctx.textAlign = 'left';
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+        
+        function restartGame() {
+            gameRunning = true;
+            gamePaused = false;
+            score = 0;
+            difficultyLevel = 1;
+            currentEnemySpawnRate = Math.max(8, baseEnemySpawnRate - (1 * 3));
+            currentPlayerSpeed = Math.min(basePlayerSpeed * 1.6, basePlayerSpeed * (1.0 + 1 * 0.03));
+            currentShotDelay = Math.max(50, baseShotDelay - (1 * 4));
+            enemySpeedMultiplier = Math.min(2.0, 1.0 + (1 * 0.05));
+            specialGauge = 0;
+            specialAttackActive = false;
+            specialAttackTimer = 0;
+            playerItems = [];
+            multiShotActive = false;
+            rapidFireActive = false;
+            pierceActive = false;
+            homingActive = false;
+            itemEffectTimers = {
+                multiShot: 0,
+                rapidFire: 0,
+                pierce: 0,
+                homing: 0
+            };
+            bullets.length = 0;
+            sidekickBullets.length = 0;
+            enemies.length = 0;
+            items.length = 0;
+            sidekicks.length = 0;
+            explosions.length = 0;
+            itemSpawnTimer = 0;
+            lastSidekickShot = 0;
+            player.x = canvas.width / 2 - 20;
+            player.y = canvas.height - 60;
+            updateScore();
+            updateGauge();
+            updateInventoryUI();
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('pauseScreen').style.display = 'none';
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            switch(e.code) {
+                case 'ArrowLeft':
+                    keys.left = true;
+                    break;
+                case 'ArrowRight':
+                    keys.right = true;
+                    break;
+                case 'ArrowUp':
+                    keys.up = true;
+                    break;
+                case 'ArrowDown':
+                    keys.down = true;
+                    break;
+                case 'Space':
+                    keys.space = true;
+                    e.preventDefault();
+                    break;
+                case 'KeyZ':
+                    keys.z = true;
+                    e.preventDefault();
+                    break;
+                case 'KeyP':
+                    handlePauseKey();
+                    e.preventDefault();
+                    break;
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            switch(e.code) {
+                case 'ArrowLeft':
+                    keys.left = false;
+                    break;
+                case 'ArrowRight':
+                    keys.right = false;
+                    break;
+                case 'ArrowUp':
+                    keys.up = false;
+                    break;
+                case 'ArrowDown':
+                    keys.down = false;
+                    break;
+                case 'Space':
+                    keys.space = false;
+                    break;
+                case 'KeyZ':
+                    keys.z = false;
+                    break;
+                case 'KeyP':
+                    pKeyPressed = false;
+                    break;
+            }
+        });
+        
+        initializeGame();
+        gameLoop();
+    </script>
+</body>
+</html>
