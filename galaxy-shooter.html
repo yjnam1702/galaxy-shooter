@@ -458,6 +458,151 @@
         button:hover {
             background: #555;
         }
+
+        /* 모바일 반응형 스타일 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+
+            #gameContainer {
+                width: 100%;
+                max-width: 100vw;
+            }
+
+            #gameCanvasWrapper {
+                width: 100%;
+                height: auto;
+            }
+
+            canvas {
+                width: 100% !important;
+                height: auto !important;
+                max-width: 100vw;
+                touch-action: none;
+            }
+
+            #rightPanel {
+                width: 100%;
+                order: -1;
+            }
+
+            .overlay-panel {
+                padding: 6px 10px;
+                font-size: 14px;
+            }
+
+            #overlayGaugeContainer {
+                padding: 8px;
+            }
+        }
+
+        /* 모바일 터치 컨트롤 */
+        #mobileControls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            z-index: 200;
+            pointer-events: none;
+            display: none;
+        }
+
+        @media (max-width: 768px), (pointer: coarse) {
+            #mobileControls {
+                display: block;
+            }
+        }
+
+        /* 가상 조이스틱 */
+        #virtualJoystick {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: all;
+            touch-action: none;
+        }
+
+        #joystickKnob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease;
+            pointer-events: none;
+        }
+
+        /* 필살기 버튼 */
+        #specialAttackBtn {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 100, 100, 0.8);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 74px;
+            pointer-events: all;
+            touch-action: none;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        #specialAttackBtn.ready {
+            opacity: 1;
+            background: rgba(255, 50, 50, 1);
+            box-shadow: 0 0 20px rgba(255, 50, 50, 0.5);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* 사격 버튼 */
+        #fireBtn {
+            position: absolute;
+            bottom: 160px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: rgba(100, 255, 100, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 56px;
+            pointer-events: all;
+            touch-action: none;
+        }
+
+        /* 터치 피드백 */
+        .btn-pressed {
+            transform: scale(0.9) !important;
+            opacity: 0.7 !important;
+        }
     </style>
 </head>
 <body>
@@ -488,6 +633,15 @@
                         <div id="equippedItemsTitle">장착된 아이템</div>
                         <div id="equippedItemsList"></div>
                     </div>
+                </div>
+            </div>
+
+            <!-- 모바일 터치 컨트롤 -->
+            <div id="mobileControls">
+                <div id="specialAttackBtn">필살기</div>
+                <div id="fireBtn">발사</div>
+                <div id="virtualJoystick">
+                    <div id="joystickKnob"></div>
                 </div>
             </div>
         </div>
@@ -631,8 +785,26 @@
             space: false,
             z: false
         };
-        
+
         let pKeyPressed = false;
+
+        // 모바일 터치 컨트롤 변수들
+        let touchControls = {
+            joystick: {
+                active: false,
+                startX: 0,
+                startY: 0,
+                currentX: 0,
+                currentY: 0,
+                deltaX: 0,
+                deltaY: 0
+            },
+            firing: false,
+            specialAttack: false
+        };
+
+        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                      (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
         
         class GameObject {
             constructor(x, y, width, height, color) {
@@ -3053,6 +3225,9 @@
             // Update overlay gauge as well
             document.getElementById('overlayGaugeFill').style.width = percentage + '%';
             document.getElementById('overlayGaugeText').textContent = `필살기 게이지: ${Math.floor(percentage)}%`;
+
+            // 모바일 필살기 버튼 상태 업데이트
+            updateSpecialAttackButton();
         }
         
         function activateSpecialAttack() {
@@ -3511,7 +3686,137 @@
                     break;
             }
         });
-        
+
+        // 모바일 터치 이벤트 핸들러들
+        function initMobileControls() {
+            const specialAttackBtn = document.getElementById('specialAttackBtn');
+            const fireBtn = document.getElementById('fireBtn');
+            const virtualJoystick = document.getElementById('virtualJoystick');
+            const joystickKnob = document.getElementById('joystickKnob');
+
+            // 필살기 버튼 이벤트
+            specialAttackBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (specialGauge >= 100) {
+                    keys.z = true;
+                    touchControls.specialAttack = true;
+                    specialAttackBtn.classList.add('btn-pressed');
+                }
+            });
+
+            specialAttackBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys.z = false;
+                touchControls.specialAttack = false;
+                specialAttackBtn.classList.remove('btn-pressed');
+            });
+
+            // 사격 버튼 이벤트
+            fireBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys.space = true;
+                touchControls.firing = true;
+                fireBtn.classList.add('btn-pressed');
+            });
+
+            fireBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys.space = false;
+                touchControls.firing = false;
+                fireBtn.classList.remove('btn-pressed');
+            });
+
+            // 가상 조이스틱 이벤트
+            virtualJoystick.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = virtualJoystick.getBoundingClientRect();
+
+                touchControls.joystick.active = true;
+                touchControls.joystick.startX = touch.clientX - rect.left;
+                touchControls.joystick.startY = touch.clientY - rect.top;
+                touchControls.joystick.currentX = touchControls.joystick.startX;
+                touchControls.joystick.currentY = touchControls.joystick.startY;
+            });
+
+            virtualJoystick.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!touchControls.joystick.active) return;
+
+                const touch = e.touches[0];
+                const rect = virtualJoystick.getBoundingClientRect();
+
+                touchControls.joystick.currentX = touch.clientX - rect.left;
+                touchControls.joystick.currentY = touch.clientY - rect.top;
+
+                // 조이스틱 중심에서의 거리 계산
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const deltaX = touchControls.joystick.currentX - centerX;
+                const deltaY = touchControls.joystick.currentY - centerY;
+
+                // 최대 거리 제한
+                const maxDistance = 40;
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+                if (distance > maxDistance) {
+                    const angle = Math.atan2(deltaY, deltaX);
+                    touchControls.joystick.deltaX = Math.cos(angle) * maxDistance;
+                    touchControls.joystick.deltaY = Math.sin(angle) * maxDistance;
+                } else {
+                    touchControls.joystick.deltaX = deltaX;
+                    touchControls.joystick.deltaY = deltaY;
+                }
+
+                // 조이스틱 노브 위치 업데이트
+                joystickKnob.style.transform = `translate(-50%, -50%) translate(${touchControls.joystick.deltaX}px, ${touchControls.joystick.deltaY}px)`;
+
+                // 키 상태 업데이트
+                const threshold = 15;
+                keys.left = touchControls.joystick.deltaX < -threshold;
+                keys.right = touchControls.joystick.deltaX > threshold;
+                keys.up = touchControls.joystick.deltaY < -threshold;
+                keys.down = touchControls.joystick.deltaY > threshold;
+            });
+
+            virtualJoystick.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                touchControls.joystick.active = false;
+                touchControls.joystick.deltaX = 0;
+                touchControls.joystick.deltaY = 0;
+
+                // 조이스틱 노브를 중앙으로 복귀
+                joystickKnob.style.transform = 'translate(-50%, -50%)';
+
+                // 모든 방향키 해제
+                keys.left = false;
+                keys.right = false;
+                keys.up = false;
+                keys.down = false;
+            });
+        }
+
+        // 필살기 게이지에 따른 버튼 상태 업데이트
+        function updateSpecialAttackButton() {
+            const specialAttackBtn = document.getElementById('specialAttackBtn');
+            if (specialAttackBtn) {
+                if (specialGauge >= 100) {
+                    specialAttackBtn.classList.add('ready');
+                } else {
+                    specialAttackBtn.classList.remove('ready');
+                }
+            }
+        }
+
+        // 모바일 컨트롤 초기화
+        if (isMobile) {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initMobileControls);
+            } else {
+                initMobileControls();
+            }
+        }
+
         // 랭킹 시스템 함수들
         function loadRankings() {
             // 글로벌 명예의 전당 - 실제 플레이어 기록만 표시
