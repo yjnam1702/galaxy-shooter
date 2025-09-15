@@ -17,12 +17,235 @@
             gap: 30px;
         }
 
+        #rightPanel {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
         #gameContainer {
             text-align: center;
+            position: relative;
+        }
+
+        #gameCanvasWrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        #overlayUI {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            z-index: 100;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        #topOverlay {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        #bottomOverlay {
+            display: block;
+        }
+
+        /* Ensure overlay UI doesn't interfere during special effects */
+        #overlayUI.special-attack {
+            opacity: 0.7;
+        }
+
+        #leftOverlay {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #rightOverlay {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .overlay-panel {
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .overlay-panel:hover {
+            background: rgba(0, 0, 0, 0.85);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .score-panel {
+            background: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+            backdrop-filter: none !important;
+            box-shadow: none !important;
+        }
+
+        .score-panel:hover {
+            background: none !important;
+            border: none !important;
+        }
+
+        #overlayScore {
+            color: #ffd700;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            backdrop-filter: none;
+            text-align: left;
+        }
+
+
+        #overlayGaugeContainer {
+            position: absolute;
+            bottom: 0px;
+            left: 0px;
+            width: 100%;
+            height: 8px;
+            z-index: 1000;
+        }
+
+        #overlayGauge {
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        #overlayGaugeFill {
+            height: 100%;
+            background: linear-gradient(to right, #ff4444, #ffff44, #44ff44);
+            width: 0%;
+            transition: width 0.2s;
+            border-radius: 2px;
+        }
+
+        #overlayGaugeText {
+            display: none;
+        }
+
+        /* Removed overlayInventory and overlay-item-slot CSS - top-right items display removed */
+
+        #equippedItemsDisplay {
+            position: absolute;
+            bottom: 35px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            padding: 8px;
+            min-width: 180px;
+            z-index: 1001;
+        }
+
+        #equippedItemsTitle {
+            color: #00ffff;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 6px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        #equippedItemsList {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            font-size: 11px;
+        }
+
+        .equipped-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #ffffff;
+        }
+
+        .equipped-item-symbol {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .equipped-item-desc {
+            flex: 1;
+            color: #cccccc;
+        }
+
+        #controlsPanel {
+            width: 320px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            color: white;
+            backdrop-filter: blur(5px);
+            margin-top: 20px;
+        }
+
+        .item-description {
+            color: #ffcc99;
+            font-size: 12px;
+            margin-left: 10px;
+            font-style: italic;
+        }
+
+        #controlsTitle {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 12px;
+            color: #00ffff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .control-item {
+            padding: 6px 0;
+            font-size: 14px;
+            color: #cccccc;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-item:last-child {
+            border-bottom: none;
+        }
+
+        .control-key {
+            color: #ffd700;
+            font-weight: bold;
         }
 
         #rankingContainer {
-            width: 300px;
+            width: 320px;
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid #333;
             border-radius: 10px;
@@ -239,21 +462,50 @@
 </head>
 <body>
     <div id="gameContainer">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="gameCanvasWrapper">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+            <!-- Overlay UI Elements -->
+            <div id="overlayUI">
+                <div id="topOverlay">
+                    <div id="leftOverlay">
+                        <div class="overlay-panel score-panel">
+                            <div id="overlayScore">점수: 0</div>
+                        </div>
+                    </div>
+                    <div id="rightOverlay">
+                        <!-- Top-right items display removed as requested -->
+                    </div>
+                </div>
+                <div id="bottomOverlay">
+                    <div id="overlayGaugeContainer">
+                        <div id="overlayGauge">
+                            <div id="overlayGaugeFill"></div>
+                        </div>
+                        <div id="overlayGaugeText">필살기 게이지: 0%</div>
+                    </div>
+                    <div id="equippedItemsDisplay">
+                        <div id="equippedItemsTitle">장착된 아이템</div>
+                        <div id="equippedItemsList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="ui">
-            <div id="score">점수: 0</div>
-            <div id="gaugeContainer">
+            <!-- Keep original elements hidden but functional for backwards compatibility -->
+            <div id="score" style="display: none;">점수: 0</div>
+            <div id="gaugeContainer" style="display: none;">
                 <div id="gauge">
                     <div id="gaugeFill"></div>
                 </div>
                 <div id="gaugeText">필살기 게이지: 0%</div>
             </div>
-            <div id="inventory">
+            <div id="inventory" style="display: none;">
                 <div class="item-slot" id="slot0"></div>
                 <div class="item-slot" id="slot1"></div>
             </div>
-            <div>방향키로 이동, Z키로 필살기, P키로 일시정지</div>
-            <div style="font-size: 12px; color: #aaa; margin-top: 5px;">⚠️ 5초간 가만히 있으면 카미카제 적군 출현!</div>
+
             <div id="pauseScreen">
                 <div>게임 일시정지</div>
                 <div style="font-size: 16px; margin-top: 10px;">P키를 눌러 계속</div>
@@ -283,16 +535,38 @@
         </div>
     </div>
 
-    <div id="rankingContainer">
-        <div id="rankingTitle">🏆 명예의 전당 🏆</div>
-        <div id="liveRankingList">
-            <div class="ranking-item">
-                <span class="ranking-rank">1</span>
-                <div>
-                    <div class="ranking-score">기록 없음</div>
-                    <div class="ranking-date">-</div>
+    <div id="rightPanel">
+        <div id="rankingContainer">
+            <div id="rankingTitle">🏆 명예의 전당 🏆</div>
+            <div id="liveRankingList">
+                <div class="ranking-item">
+                    <span class="ranking-rank">1</span>
+                    <div>
+                        <div class="ranking-score">기록 없음</div>
+                        <div class="ranking-date">-</div>
+                    </div>
                 </div>
             </div>
+            <div id="lastUpdated" style="font-size: 10px; color: #666; text-align: center; margin-top: 5px; padding: 0 10px;">
+                마지막 업데이트: -
+            </div>
+        </div>
+
+        <div id="controlsPanel">
+            <div id="controlsTitle">🎮 게임 조작법 🎮</div>
+            <div class="control-item"><span class="control-key">방향키</span> : 비행기 이동</div>
+            <div class="control-item"><span class="control-key">Z키</span> : 필살기 발동</div>
+            <div class="control-item"><span class="control-key">P키</span> : 일시정지/재개</div>
+            <div class="control-item" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <div style="color: #88ff88; font-weight: bold; margin-bottom: 4px;">📦 아이템 종류</div>
+                <div><span class="control-key">H</span> : 호밍 미사일 <span class="item-description">적을 추적하는 유도탄</span></div>
+                <div><span class="control-key">R</span> : 연사 탄환 <span class="item-description">빠른 연사 속도</span></div>
+                <div><span class="control-key">P</span> : 관통 탄환 <span class="item-description">적을 관통해서 지나감</span></div>
+                <div><span class="control-key">M</span> : 멀티샷 <span class="item-description">3방향 동시 발사</span></div>
+                <div><span class="control-key">B</span> : 바운싱 탄환 <span class="item-description">벽에 튕기는 탄환</span></div>
+                <div><span class="control-key">S</span> : 사이드킥 <span class="item-description">아이템 획득시 동반자 추가</span></div>
+            </div>
+            <div class="control-item" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 12px; color: #ff9999;">⚠️ 5초간 가만히 있으면 카미카제 적군 출현!</div>
         </div>
     </div>
 
@@ -313,11 +587,13 @@
         let rapidFireActive = false;
         let pierceActive = false;
         let homingActive = false;
+        let bouncingActive = false;
         let itemEffectTimers = {
             multiShot: 0,
             rapidFire: 0,
             pierce: 0,
-            homing: 0
+            homing: 0,
+            bouncing: 0
         };
         let sidekicks = [];
         let maxSidekicks = 2;
@@ -326,7 +602,7 @@
         let difficultyLevel = 1;
         let maxDifficultyLevel = 999;
         let rankings = [];
-        let maxRankings = 10;
+        let maxRankings = 5;
         let lastMovementTime = 0;
         let idleThreshold = 5000; // 5초
         let kamikazeActive = false;
@@ -580,7 +856,96 @@
                 ctx.fillRect(this.x, this.y, this.width, this.height);
             }
         }
-        
+
+        class BouncingBullet extends GameObject {
+            constructor(x, y) {
+                super(x, y, 4, 8, '#ffaa00');
+                this.speed = 10;
+
+                // Random direction: 40% straight up, 30% diagonal left, 30% diagonal right
+                const direction = Math.random();
+                if (direction < 0.4) {
+                    // Straight up
+                    this.vx = 0;
+                    this.vy = -this.speed;
+                } else if (direction < 0.7) {
+                    // Diagonal left
+                    this.vx = -this.speed * 0.7;
+                    this.vy = -this.speed * 0.7;
+                } else {
+                    // Diagonal right
+                    this.vx = this.speed * 0.7;
+                    this.vy = -this.speed * 0.7;
+                }
+
+                this.bounces = 0;
+                this.maxBounces = 4;
+                this.hitEnemies = [];
+                this.isBouncing = true;
+            }
+
+            update() {
+                // Move the bullet
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Check for wall collisions and bounce
+                if (this.bounces < this.maxBounces) {
+                    // Left wall collision
+                    if (this.x <= 0) {
+                        this.x = 0;
+                        this.vx = Math.abs(this.vx);
+                        this.bounces++;
+                    }
+                    // Right wall collision
+                    else if (this.x + this.width >= canvas.width) {
+                        this.x = canvas.width - this.width;
+                        this.vx = -Math.abs(this.vx);
+                        this.bounces++;
+                    }
+
+                    // Top wall collision
+                    if (this.y <= 0) {
+                        this.y = 0;
+                        this.vy = Math.abs(this.vy);
+                        this.bounces++;
+                    }
+                    // Bottom wall collision
+                    else if (this.y + this.height >= canvas.height) {
+                        this.y = canvas.height - this.height;
+                        this.vy = -Math.abs(this.vy);
+                        this.bounces++;
+                    }
+                }
+
+                // Remove bullet if it has bounced too many times or goes off screen after max bounces
+                return this.bounces >= this.maxBounces && (this.y < 0 || this.y > canvas.height || this.x < 0 || this.x > canvas.width);
+            }
+
+            draw() {
+                // Create a glowing effect for bouncing bullets
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+
+                // Outer glow
+                const glowGradient = ctx.createRadialGradient(centerX, centerY, 1, centerX, centerY, 8);
+                glowGradient.addColorStop(0, '#ffaa00');
+                glowGradient.addColorStop(0.5, '#ff6600');
+                glowGradient.addColorStop(1, 'rgba(255, 102, 0, 0)');
+
+                ctx.fillStyle = glowGradient;
+                ctx.fillRect(this.x - 4, this.y - 4, this.width + 8, this.height + 8);
+
+                // Main bullet body
+                ctx.fillStyle = '#ffaa00';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                // Inner highlight
+                ctx.fillStyle = '#ffdd44';
+                ctx.fillRect(this.x + 1, this.y + 1, this.width - 2, this.height - 2);
+            }
+        }
+
         class KamikazeEnemy extends GameObject {
             constructor(x, y, targetX, targetY) {
                 super(x, y, 35, 40, '#ff0000');
@@ -659,7 +1024,7 @@
                 this.speed = 1;
                 this.shootTimer = 0;
                 this.moveTimer = 0;
-                this.moveDirection = 1;
+                this.moveDirection = Math.random() < 0.5 ? -1 : 1; // 랜덤 초기 방향
                 this.isBoss = true;
                 this.phase = 1;
                 this.attackPattern = 0;
@@ -671,28 +1036,37 @@
                 if (this.y < 50) {
                     this.y += this.speed;
                 } else {
-                    // 좌우 움직임 (더 느리게)
+                    // 좌우 움직임 (더 균형적이고 중앙 지향적)
                     this.moveTimer++;
-                    if (this.moveTimer > 200) { // 120에서 200으로 증가 (더 오래 한 방향으로 이동)
+                    if (this.moveTimer > 180) { // 200에서 180으로 조정
                         this.moveDirection *= -1;
                         this.moveTimer = 0;
                     }
-                    this.x += this.moveDirection * 1.5; // 2에서 1.5로 감소 (움직임 속도도 조금 느리게)
 
-                    // 경계 체크
-                    if (this.x < 0) {
-                        this.x = 0;
+                    // 중앙으로 끌리는 힘 추가
+                    const centerX = canvas.width / 2 - this.width / 2;
+                    const distanceFromCenter = this.x - centerX;
+                    const centerPull = distanceFromCenter * -0.02; // 중앙으로 끌리는 힘
+
+                    this.x += this.moveDirection * 1.2 + centerPull; // 움직임 속도 약간 감소
+
+                    // 경계 체크 (더 여유롭게)
+                    if (this.x < 20) {
+                        this.x = 20;
                         this.moveDirection = 1;
+                        this.moveTimer = 0; // 방향 변경 시 타이머 리셋
                     }
-                    if (this.x > canvas.width - this.width) {
-                        this.x = canvas.width - this.width;
+                    if (this.x > canvas.width - this.width - 20) {
+                        this.x = canvas.width - this.width - 20;
                         this.moveDirection = -1;
+                        this.moveTimer = 0; // 방향 변경 시 타이머 리셋
                     }
 
                     // 공격 패턴
                     this.patternTimer++;
                     this.updateAttackPattern();
                 }
+                return false; // Boss should not be removed by update
             }
 
             updateAttackPattern() {
@@ -704,13 +1078,13 @@
                 }
 
                 if (this.phase === 1) {
-                    // 페이즈 1: 직선 발사
-                    if (this.patternTimer % 60 === 0) {
+                    // 페이즈 1: 직선 발사 (더 느리게 - 60에서 100으로 증가)
+                    if (this.patternTimer % 100 === 0) {
                         this.shootStraight();
                     }
                 } else {
-                    // 페이즈 2: 산탄 발사
-                    if (this.patternTimer % 40 === 0) {
+                    // 페이즈 2: 산탄 발사 (더 느리게 - 40에서 70으로 증가)
+                    if (this.patternTimer % 70 === 0) {
                         this.shootSpread();
                     }
                 }
@@ -768,196 +1142,118 @@
                 const centerX = this.x + this.width / 2;
                 const centerY = this.y + this.height / 2;
 
-                // 대형 전투기 스타일 (레퍼런스 이미지와 유사)
+                // 스타워즈 스타 디스트로이어 디자인
                 ctx.save();
 
-                // 메인 동체 (대형 전투기)
-                const fuselageGradient = ctx.createLinearGradient(centerX - 60, centerY, centerX + 60, centerY);
-                fuselageGradient.addColorStop(0, '#2a2a2a');
-                fuselageGradient.addColorStop(0.3, '#4a4a4a');
-                fuselageGradient.addColorStop(0.7, '#3a3a3a');
-                fuselageGradient.addColorStop(1, '#2a2a2a');
+                // 메인 삼각형 선체 (Star Destroyer 특징적인 쐐기 모양)
+                const hullGradient = ctx.createLinearGradient(centerX, this.y, centerX, this.y + this.height);
+                hullGradient.addColorStop(0, '#C0C0C0');
+                hullGradient.addColorStop(0.3, '#909090');
+                hullGradient.addColorStop(0.7, '#707070');
+                hullGradient.addColorStop(1, '#505050');
 
-                ctx.fillStyle = fuselageGradient;
-                ctx.fillRect(centerX - 50, this.y + 15, 100, 70);
-
-                // 기수 (뾰족한 형태)
-                const noseGradient = ctx.createLinearGradient(centerX, this.y, centerX, this.y + 20);
-                noseGradient.addColorStop(0, '#5a5a5a');
-                noseGradient.addColorStop(1, '#4a4a4a');
-
-                ctx.fillStyle = noseGradient;
+                ctx.fillStyle = hullGradient;
                 ctx.beginPath();
-                ctx.moveTo(centerX, this.y);
-                ctx.lineTo(centerX - 20, this.y + 18);
-                ctx.lineTo(centerX + 20, this.y + 18);
+                // 스타 디스트로이어 쐐기 모양
+                ctx.moveTo(centerX, this.y + 10); // 뾰족한 앞부분
+                ctx.lineTo(centerX - 55, this.y + this.height - 10); // 좌측 후면
+                ctx.lineTo(centerX + 55, this.y + this.height - 10); // 우측 후면
                 ctx.closePath();
                 ctx.fill();
 
-                // 대형 날개 (좌우)
-                const wingGradient = ctx.createLinearGradient(centerX - 80, centerY, centerX + 80, centerY);
-                wingGradient.addColorStop(0, '#3a3a3a');
-                wingGradient.addColorStop(0.5, '#5a5a5a');
-                wingGradient.addColorStop(1, '#3a3a3a');
+                // 상부 구조물 (브리지 타워)
+                const bridgeGradient = ctx.createLinearGradient(centerX, this.y + 20, centerX, this.y + 50);
+                bridgeGradient.addColorStop(0, '#B0B0B0');
+                bridgeGradient.addColorStop(0.5, '#808080');
+                bridgeGradient.addColorStop(1, '#606060');
 
-                ctx.fillStyle = wingGradient;
-                // 좌측 날개
-                ctx.fillRect(this.x - 40, this.y + 35, 50, 20);
-                // 우측 날개
-                ctx.fillRect(this.x + this.width - 10, this.y + 35, 50, 20);
+                ctx.fillStyle = bridgeGradient;
+                // 중앙 브리지 타워
+                ctx.fillRect(centerX - 25, this.y + 20, 50, 25);
 
-                // 엔진 (6개의 제트 엔진)
-                const engineGradient = ctx.createLinearGradient(centerX, this.y + this.height - 15, centerX, this.y + this.height);
-                engineGradient.addColorStop(0, '#0099ff');
-                engineGradient.addColorStop(0.5, '#0066cc');
-                engineGradient.addColorStop(1, '#004499');
+                // 브리지 상부 구조
+                ctx.fillRect(centerX - 30, this.y + 15, 60, 15);
+
+                // 함교 (Command Bridge)
+                ctx.fillStyle = '#404040';
+                ctx.fillRect(centerX - 20, this.y + 8, 40, 12);
+
+                // 브리지 창문들 (Imperial officers' viewing windows)
+                ctx.fillStyle = 'rgba(100, 150, 255, 0.8)';
+                for (let i = 0; i < 8; i++) {
+                    ctx.fillRect(centerX - 18 + i * 4.5, this.y + 10, 3, 6);
+                }
+
+                // 엔진 글로우 (후방 추진기들)
+                const engineGradient = ctx.createLinearGradient(centerX, this.y + this.height - 15, centerX, this.y + this.height + 5);
+                engineGradient.addColorStop(0, '#4080FF');
+                engineGradient.addColorStop(0.5, '#2060FF');
+                engineGradient.addColorStop(1, 'rgba(32, 96, 255, 0)');
 
                 ctx.fillStyle = engineGradient;
-                // 메인 엔진들
-                ctx.fillRect(centerX - 35, this.y + this.height - 15, 8, 15);
-                ctx.fillRect(centerX - 20, this.y + this.height - 15, 8, 15);
-                ctx.fillRect(centerX - 5, this.y + this.height - 15, 8, 15);
-                ctx.fillRect(centerX + 10, this.y + this.height - 15, 8, 15);
-                ctx.fillRect(centerX + 25, this.y + this.height - 15, 8, 15);
-                ctx.fillRect(centerX + 40, this.y + this.height - 15, 8, 15);
+                // 대형 주 엔진들 (Star Destroyer 특징적인 후방 엔진)
+                ctx.fillRect(centerX - 45, this.y + this.height - 12, 12, 18);
+                ctx.fillRect(centerX - 30, this.y + this.height - 12, 12, 18);
+                ctx.fillRect(centerX - 15, this.y + this.height - 12, 12, 18);
+                ctx.fillRect(centerX + 3, this.y + this.height - 12, 12, 18);
+                ctx.fillRect(centerX + 18, this.y + this.height - 12, 12, 18);
+                ctx.fillRect(centerX + 33, this.y + this.height - 12, 12, 18);
 
-                // Aircraft cockpit and nose section
-                const cockpitGradient = ctx.createLinearGradient(centerX, this.y + 15, centerX, this.y + 45);
-                cockpitGradient.addColorStop(0, '#6A8CAF');
-                cockpitGradient.addColorStop(0.5, '#4F6F8F');
-                cockpitGradient.addColorStop(1, '#2A3A4A');
-                ctx.fillStyle = cockpitGradient;
+                // 표면 세부 사항 (Imperial hull paneling)
+                ctx.strokeStyle = '#808080';
+                ctx.lineWidth = 1;
 
-                // Main cockpit canopy
-                ctx.fillRect(centerX - 20, this.y + 15, 40, 25);
-
-                // Cockpit windows (transparent blue)
-                ctx.fillStyle = 'rgba(100, 150, 255, 0.7)';
-                ctx.fillRect(centerX - 15, this.y + 18, 30, 8);
-                ctx.fillRect(centerX - 12, this.y + 28, 24, 6);
-
-                // Nose cone and radar equipment
-                ctx.fillStyle = '#404040';
-                ctx.fillRect(centerX - 8, this.y + 5, 16, 15);
-
-                // Radar dome
-                ctx.fillStyle = '#555555';
+                // 선체 패널 라인들
                 ctx.beginPath();
-                ctx.arc(centerX, this.y + 12, 6, 0, Math.PI * 2);
+                ctx.moveTo(centerX - 40, this.y + 30);
+                ctx.lineTo(centerX + 40, this.y + 30);
+                ctx.moveTo(centerX - 35, this.y + 45);
+                ctx.lineTo(centerX + 35, this.y + 45);
+                ctx.moveTo(centerX - 30, this.y + 60);
+                ctx.lineTo(centerX + 30, this.y + 60);
+                ctx.stroke();
+
+                // 측면 무기 하드포인트 (Turbolaser batteries)
+                ctx.fillStyle = '#505050';
+
+                // 좌측 터보레이저 포탑들
+                ctx.fillRect(centerX - 50, this.y + 40, 8, 6);
+                ctx.fillRect(centerX - 50, this.y + 55, 8, 6);
+                ctx.fillRect(centerX - 45, this.y + 70, 6, 4);
+
+                // 우측 터보레이저 포탑들
+                ctx.fillRect(centerX + 42, this.y + 40, 8, 6);
+                ctx.fillRect(centerX + 42, this.y + 55, 8, 6);
+                ctx.fillRect(centerX + 39, this.y + 70, 6, 4);
+
+                // 제국 마크/로고 위치 (중앙 상부)
+                ctx.fillStyle = '#303030';
+                ctx.beginPath();
+                ctx.arc(centerX, this.y + 35, 8, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Twin jet engines
-                const twinEngineGradient = ctx.createLinearGradient(0, this.y + this.height - 12, 0, this.y + this.height);
-                twinEngineGradient.addColorStop(0, '#404040');
-                twinEngineGradient.addColorStop(0.5, '#2A2A2A');
-                twinEngineGradient.addColorStop(1, '#1A1A1A');
-                ctx.fillStyle = twinEngineGradient;
-
-                // Left engine nacelle
-                ctx.fillRect(centerX - 30, this.y + this.height - 12, 18, 12);
-                // Right engine nacelle
-                ctx.fillRect(centerX + 12, this.y + this.height - 12, 18, 12);
-
-                // Engine intakes
-                ctx.fillStyle = '#1A1A1A';
-                ctx.fillRect(centerX - 28, this.y + this.height - 10, 14, 8);
-                ctx.fillRect(centerX + 14, this.y + this.height - 10, 14, 8);
-
-                // Wing-mounted weapon systems
-                ctx.fillStyle = '#333333';
-
-                // Left wing weapons
-                // Gun pod
-                ctx.fillRect(centerX - 45, this.y + 35, 12, 6);
-                ctx.fillStyle = '#1A1A1A';
-                ctx.fillRect(centerX - 43, this.y + 33, 2, 4); // Gun barrel
-                ctx.fillRect(centerX - 39, this.y + 33, 2, 4); // Gun barrel
-
-                // Missile hardpoints
-                ctx.fillStyle = '#2A2A2A';
-                for (let i = 0; i < 2; i++) {
-                    ctx.fillRect(centerX - 50 + i * 8, this.y + 45 + i * 8, 8, 4);
-                    // Missiles
-                    ctx.fillStyle = '#404040';
-                    ctx.fillRect(centerX - 48 + i * 8, this.y + 43 + i * 8, 4, 12);
-                    ctx.fillStyle = '#2A2A2A';
-                }
-
-                // Right wing weapons (mirrored)
-                ctx.fillStyle = '#333333';
-                ctx.fillRect(centerX + 33, this.y + 35, 12, 6);
-                ctx.fillStyle = '#1A1A1A';
-                ctx.fillRect(centerX + 35, this.y + 33, 2, 4); // Gun barrel
-                ctx.fillRect(centerX + 39, this.y + 33, 2, 4); // Gun barrel
-
-                // Right missile hardpoints
-                ctx.fillStyle = '#2A2A2A';
-                for (let i = 0; i < 2; i++) {
-                    ctx.fillRect(centerX + 42 + i * 8, this.y + 45 + i * 8, 8, 4);
-                    // Missiles
-                    ctx.fillStyle = '#404040';
-                    ctx.fillRect(centerX + 44 + i * 8, this.y + 43 + i * 8, 4, 12);
-                    ctx.fillStyle = '#2A2A2A';
-                }
-
-                // Engine afterburner effects
-                const leftEngineGlow = ctx.createRadialGradient(centerX - 21, this.y + this.height - 6, 0, centerX - 21, this.y + this.height - 6, 15);
-                leftEngineGlow.addColorStop(0, '#FFAA00');
-                leftEngineGlow.addColorStop(0.3, '#FF6600');
-                leftEngineGlow.addColorStop(0.7, '#FF3300');
-                leftEngineGlow.addColorStop(1, 'rgba(255, 51, 0, 0)');
-
-                ctx.fillStyle = leftEngineGlow;
-                ctx.fillRect(centerX - 30, this.y + this.height - 8, 18, 8);
-
-                const rightEngineGlow = ctx.createRadialGradient(centerX + 21, this.y + this.height - 6, 0, centerX + 21, this.y + this.height - 6, 15);
-                rightEngineGlow.addColorStop(0, '#FFAA00');
-                rightEngineGlow.addColorStop(0.3, '#FF6600');
-                rightEngineGlow.addColorStop(0.7, '#FF3300');
-                rightEngineGlow.addColorStop(1, 'rgba(255, 51, 0, 0)');
-
-                ctx.fillStyle = rightEngineGlow;
-                ctx.fillRect(centerX + 12, this.y + this.height - 8, 18, 8);
-
-                // Aircraft panel lines and details
-                ctx.strokeStyle = '#555555';
-                ctx.lineWidth = 0.8;
+                // 안테나/통신 장비
+                ctx.strokeStyle = '#606060';
+                ctx.lineWidth = 2;
                 ctx.beginPath();
+                ctx.moveTo(centerX - 10, this.y + 15);
+                ctx.lineTo(centerX - 10, this.y + 5);
+                ctx.moveTo(centerX + 10, this.y + 15);
+                ctx.lineTo(centerX + 10, this.y + 5);
+                // Star Destroyer 특징적인 디테일 완성
+                ctx.fillStyle = '#808080';
 
-                // Fuselage center line
-                ctx.moveTo(centerX, this.y + 40);
-                ctx.lineTo(centerX, this.y + this.height * 0.85);
+                // 하위 포탑들 (Heavy turbolaser turrets)
+                ctx.fillRect(centerX - 15, this.y + 50, 5, 3);
+                ctx.fillRect(centerX + 10, this.y + 50, 5, 3);
+                ctx.fillRect(centerX - 8, this.y + 65, 4, 3);
+                ctx.fillRect(centerX + 4, this.y + 65, 4, 3);
 
-                // Wing panel lines
-                ctx.moveTo(centerX - 25, this.y + 50);
-                ctx.lineTo(centerX - 15, this.y + this.height * 0.7);
-                ctx.moveTo(centerX + 25, this.y + 50);
-                ctx.lineTo(centerX + 15, this.y + this.height * 0.7);
-
-                // Engine separation lines
-                ctx.moveTo(centerX - 35, this.y + 60);
-                ctx.lineTo(centerX - 25, this.y + this.height * 0.8);
-                ctx.moveTo(centerX + 35, this.y + 60);
-                ctx.lineTo(centerX + 25, this.y + this.height * 0.8);
-
-                ctx.stroke();
-
-                // Aircraft markings and insignia
-                ctx.fillStyle = '#FFFFFF';
-                ctx.font = '8px Arial';
-                ctx.fillText('AF-01', centerX - 12, this.y + 70);
-
-                // Warning stripes on weapons
-                ctx.strokeStyle = '#FFFF00';
-                ctx.lineWidth = 1;
+                // Imperial insignia (제국 로고)
+                ctx.fillStyle = '#202020';
                 ctx.beginPath();
-                for (let i = 0; i < 3; i++) {
-                    ctx.moveTo(centerX - 48 + i * 2, this.y + 47);
-                    ctx.lineTo(centerX - 46 + i * 2, this.y + 49);
-                    ctx.moveTo(centerX + 44 + i * 2, this.y + 47);
-                    ctx.lineTo(centerX + 46 + i * 2, this.y + 49);
-                }
-                ctx.stroke();
+                ctx.arc(centerX, this.y + 55, 4, 0, Math.PI * 2);
+                ctx.fill();
 
                 ctx.restore();
 
@@ -1655,19 +1951,21 @@
             constructor(x, y) {
                 super(x, y, 20, 20, '#00ff00');
                 this.speed = 3;
-                this.types = ['multiShot', 'rapidFire', 'pierce', 'homing'];
+                this.types = ['multiShot', 'rapidFire', 'pierce', 'homing', 'bouncing'];
                 this.type = this.types[Math.floor(Math.random() * this.types.length)];
                 this.colors = {
                     multiShot: '#ff6600',
                     rapidFire: '#ff0066',
                     pierce: '#00ffff',
-                    homing: '#ff00ff'
+                    homing: '#ff00ff',
+                    bouncing: '#ffaa00'
                 };
                 this.symbols = {
                     multiShot: 'M',
                     rapidFire: 'R',
                     pierce: 'P',
-                    homing: 'H'
+                    homing: 'H',
+                    bouncing: 'B'
                 };
                 this.color = this.colors[this.type];
             }
@@ -1745,6 +2043,7 @@
                 super(0, 0, 15, 20, '#00aa00');
                 this.side = side;
                 this.lastShot = 0; // 개별 발사 타이머
+                this.lastBouncingShot = 0; // 바운싱 총알 발사 타이머
                 if (side === 'left') {
                     this.offsetX = -30;
                     this.offsetY = 10;
@@ -1811,6 +2110,7 @@
         const clouds = []; // 구름
         let items = [];
         let sidekickBullets = [];
+        let bouncingBullets = [];
 
         // 구름 초기화 (개수 줄임)
         for (let i = 0; i < 15; i++) {
@@ -1818,6 +2118,7 @@
         }
         
         let lastShot = 0;
+        let lastBouncingShot = 0;
         let enemySpawnTimer = 0;
         let itemSpawnTimer = 0;
         
@@ -2152,11 +2453,20 @@
             
             player.update();
             
+            // Regular shooting logic - always fires regardless of bouncing effect
             if (Date.now() - lastShot > currentShotDelay) {
                 // 기본 더블 샷
                 bullets.push(new Bullet(player.x + player.width / 2 - 8, player.y - 5));
                 bullets.push(new Bullet(player.x + player.width / 2 + 4, player.y - 5));
                 lastShot = Date.now();
+            }
+
+            // Bouncing bullets - additional shots when bouncing effect is active
+            if (bouncingActive) {
+                if (Date.now() - lastBouncingShot > 800) {
+                    bouncingBullets.push(new BouncingBullet(player.x + player.width / 2 - 2, player.y - 5));
+                    lastBouncingShot = Date.now();
+                }
             }
             
             // Sidekick shooting with individual item abilities
@@ -2170,6 +2480,7 @@
                     const isHoming = item.type === 'homing';
                     const isPierce = item.type === 'pierce';
                     const isRapidFire = item.type === 'rapidFire';
+                    const isBouncing = item.type === 'bouncing';
 
                     // 각 아이템 유형별 발사 간격
                     const baseDelay = 200;
@@ -2181,6 +2492,7 @@
                         currentDelay = 670; // 호밍만
                     }
 
+                    // Regular bullets from sidekicks - always fire regardless of bouncing effect
                     if (Date.now() - sidekick.lastShot > currentDelay) {
                         if (isMultiShot) {
                             sidekickBullets.push(new Bullet(sidekick.x + sidekick.width / 2 - 6, sidekick.y - 5, isHoming, isPierce));
@@ -2190,6 +2502,12 @@
                             sidekickBullets.push(new Bullet(sidekick.x + sidekick.width / 2 - 2, sidekick.y - 5, isHoming, isPierce));
                         }
                         sidekick.lastShot = Date.now();
+                    }
+
+                    // Bouncing bullets from sidekicks - additional shots when bouncing effect is active
+                    if (isBouncing && Date.now() - sidekick.lastBouncingShot > 1200) {
+                        bouncingBullets.push(new BouncingBullet(sidekick.x + sidekick.width / 2 - 2, sidekick.y - 5));
+                        sidekick.lastBouncingShot = Date.now();
                     }
                 } else {
                     // 아이템이 없는 사이드킥은 기본 총알 발사
@@ -2222,7 +2540,14 @@
                     sidekickBullets.splice(bulletIndex, 1);
                 }
             });
-            
+
+            bouncingBullets.forEach((bullet, bulletIndex) => {
+                const shouldRemove = bullet.update();
+                if (shouldRemove) {
+                    bouncingBullets.splice(bulletIndex, 1);
+                }
+            });
+
             enemies.forEach((enemy, enemyIndex) => {
                 const shouldRemove = enemy.update();
                 if ((enemy.y > canvas.height && !enemy.isBoss && !enemy.isBossBullet) ||
@@ -2358,10 +2683,46 @@
                         }
                     }
                 });
+
+                bouncingBullets.forEach((bullet, bulletIndex) => {
+                    if (bullet.collidesWith(enemy) && !bullet.hitEnemies.includes(enemy) && !enemy.isBossBullet && !enemy.isUAPBullet) {
+                        createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+
+                        // Bouncing bullets can hit enemies multiple times like pierce bullets
+                        bullet.hitEnemies.push(enemy);
+
+                        if (enemy.isBoss) {
+                            // 보스는 바운싱 총알에도 데미지 입음
+                            if (enemy.takeDamage(2)) { // 바운싱 총알은 플레이어 총알과 같은 데미지
+                                enemies.splice(enemyIndex, 1);
+                                updateScore();
+                                updateGauge();
+                            }
+                        } else if (enemy.isElite) {
+                            // 강화 적은 HP 시스템 사용
+                            if (enemy.takeDamage()) {
+                                enemies.splice(enemyIndex, 1);
+                                score += 50; // 강화 적 보너스
+                                updateScore();
+                            }
+                            specialGauge = Math.min(specialGauge + 10, maxGauge);
+                            updateGauge();
+                        } else {
+                            // 일반 적은 즉시 제거
+                            enemies.splice(enemyIndex, 1);
+                            if (!bossActive) { // 보스가 없을 때만 점수 증가
+                                score += 10;
+                                updateScore();
+                            }
+                            specialGauge = Math.min(specialGauge + 3, maxGauge);
+                            updateGauge();
+                        }
+                    }
+                });
             });
-            
+
             clouds.forEach(particle => particle.update());
-            
+
             items.forEach((item, itemIndex) => {
                 item.update();
                 if (item.y > canvas.height) {
@@ -2413,8 +2774,8 @@
                 enemySpawnTimer = 0;
             }
 
-            // UAP 랜덤 스폰 (0.5% 확률)
-            if (Math.random() < 0.005 && gameRunning && !gamePaused) {
+            // UAP 랜덤 스폰 (0.2% 확률)
+            if (Math.random() < 0.002 && gameRunning && !gamePaused) {
                 enemies.push(new UAPEnemy());
             }
 
@@ -2433,15 +2794,16 @@
 
             // 건물들과 구름 효과 그리기
             clouds.forEach(particle => particle.draw());
-            
+
             player.draw();
             bullets.forEach(bullet => bullet.draw());
             sidekickBullets.forEach(bullet => bullet.draw());
+            bouncingBullets.forEach(bullet => bullet.draw());
             enemies.forEach(enemy => enemy.draw());
             items.forEach(item => item.draw());
             sidekicks.forEach(sidekick => sidekick.draw());
             explosions.forEach(explosion => explosion.draw());
-            
+
             if (specialAttackActive) {
                 drawSpecialAttackEffect();
             }
@@ -2460,10 +2822,13 @@
             currentPlayerSpeed = Math.min(basePlayerSpeed * 1.6, basePlayerSpeed * (1.0 + 1 * 0.03));
             currentShotDelay = Math.max(30, baseShotDelay - (1 * 3));
             enemySpeedMultiplier = Math.min(2.0, 1.0 + (1 * 0.05));
+            updateEquippedItemsDisplay();
         }
         
         function updateScore() {
             document.getElementById('score').textContent = `점수: ${score}`;
+            // Update overlay score as well
+            document.getElementById('overlayScore').textContent = `점수: ${score}`;
         }
 
         function drawCityBackground() {
@@ -2480,11 +2845,10 @@
             // 육지 (해안선과 섬들)
             drawLandMasses();
 
-            // 숲과 밭
-            drawForests();
+            // 전쟁터 배경
+            drawBattlefield();
 
-            // 군사 시설
-            drawMilitaryBuildings();
+            // 군사 시설 - removed
 
             // 정적 해안선 효과
             drawWaterEffects();
@@ -2525,152 +2889,139 @@
             ctx.restore();
         }
 
-        function drawForests() {
+        function drawBattlefield() {
             ctx.save();
 
-            // 우측 도시 (건물들과 거리)
+            // 전쟁터 배경 (우측 육지)
 
-            // 도시 블록들 (건물들)
-            const buildings = [
-                // 고층 빌딩들
-                {x: canvas.width * 0.68, y: canvas.height * 0.1, w: 25, h: 120, color: '#4a4a4a'},
-                {x: canvas.width * 0.72, y: canvas.height * 0.15, w: 20, h: 100, color: '#5a5a5a'},
-                {x: canvas.width * 0.75, y: canvas.height * 0.08, w: 30, h: 140, color: '#3a3a3a'},
-                {x: canvas.width * 0.80, y: canvas.height * 0.12, w: 22, h: 110, color: '#6a6a6a'},
-                {x: canvas.width * 0.84, y: canvas.height * 0.18, w: 18, h: 90, color: '#4a4a4a'},
-                {x: canvas.width * 0.88, y: canvas.height * 0.14, w: 28, h: 105, color: '#5a5a5a'},
+            // 파괴된 건물들과 폐허
+            const ruins = [
+                // 파괴된 고층 건물들 (불규칙한 모양으로 파괴됨)
+                {x: canvas.width * 0.68, y: canvas.height * 0.1, w: 25, h: 80, color: '#3a3a3a', destroyed: true},
+                {x: canvas.width * 0.72, y: canvas.height * 0.25, w: 20, h: 60, color: '#4a4a4a', destroyed: true},
+                {x: canvas.width * 0.75, y: canvas.height * 0.08, w: 30, h: 90, color: '#2a2a2a', destroyed: true},
+                {x: canvas.width * 0.80, y: canvas.height * 0.22, w: 22, h: 70, color: '#5a5a5a', destroyed: true},
+                {x: canvas.width * 0.84, y: canvas.height * 0.18, w: 18, h: 50, color: '#3a3a3a', destroyed: true},
+                {x: canvas.width * 0.88, y: canvas.height * 0.24, w: 28, h: 65, color: '#4a4a4a', destroyed: true},
 
-                // 중층 빌딩들
-                {x: canvas.width * 0.70, y: canvas.height * 0.35, w: 15, h: 60, color: '#5a5a5a'},
-                {x: canvas.width * 0.74, y: canvas.height * 0.38, w: 18, h: 55, color: '#4a4a4a'},
-                {x: canvas.width * 0.77, y: canvas.height * 0.32, w: 20, h: 70, color: '#6a6a6a'},
-                {x: canvas.width * 0.82, y: canvas.height * 0.40, w: 16, h: 50, color: '#3a3a3a'},
-                {x: canvas.width * 0.86, y: canvas.height * 0.36, w: 22, h: 65, color: '#5a5a5a'},
+                // 중간 크기 파괴된 건물들
+                {x: canvas.width * 0.70, y: canvas.height * 0.45, w: 15, h: 30, color: '#4a4a4a', destroyed: true},
+                {x: canvas.width * 0.74, y: canvas.height * 0.48, w: 18, h: 25, color: '#3a3a3a', destroyed: true},
+                {x: canvas.width * 0.77, y: canvas.height * 0.42, w: 20, h: 35, color: '#5a5a5a', destroyed: true},
+                {x: canvas.width * 0.82, y: canvas.height * 0.50, w: 16, h: 20, color: '#2a2a2a', destroyed: true},
+                {x: canvas.width * 0.86, y: canvas.height * 0.46, w: 22, h: 30, color: '#4a4a4a', destroyed: true},
 
-                // 저층 빌딩들
-                {x: canvas.width * 0.69, y: canvas.height * 0.55, w: 12, h: 35, color: '#6a6a6a'},
-                {x: canvas.width * 0.73, y: canvas.height * 0.58, w: 14, h: 30, color: '#4a4a4a'},
-                {x: canvas.width * 0.76, y: canvas.height * 0.52, w: 16, h: 40, color: '#5a5a5a'},
-                {x: canvas.width * 0.81, y: canvas.height * 0.60, w: 13, h: 28, color: '#3a3a3a'},
-                {x: canvas.width * 0.85, y: canvas.height * 0.56, w: 18, h: 35, color: '#6a6a6a'},
-                {x: canvas.width * 0.89, y: canvas.height * 0.59, w: 15, h: 32, color: '#4a4a4a'}
+                // 작은 파괴된 구조물들
+                {x: canvas.width * 0.69, y: canvas.height * 0.65, w: 12, h: 15, color: '#5a5a5a', destroyed: true},
+                {x: canvas.width * 0.73, y: canvas.height * 0.68, w: 14, h: 12, color: '#3a3a3a', destroyed: true},
+                {x: canvas.width * 0.76, y: canvas.height * 0.62, w: 16, h: 18, color: '#4a4a4a', destroyed: true},
+                {x: canvas.width * 0.81, y: canvas.height * 0.70, w: 13, h: 10, color: '#2a2a2a', destroyed: true}
             ];
 
-            // 건물들 그리기
-            buildings.forEach(building => {
-                // 건물 본체
-                ctx.fillStyle = building.color;
-                ctx.fillRect(building.x, building.y, building.w, building.h);
+            // 파괴된 건물들 그리기
+            ruins.forEach(ruin => {
+                // 건물 본체 (더 어둡고 손상된 색상)
+                ctx.fillStyle = ruin.color;
 
-                // 건물 창문들 (노란 불빛)
-                ctx.fillStyle = '#ffdd44';
-                for (let floor = 0; floor < Math.floor(building.h / 8); floor++) {
-                    for (let window = 0; window < Math.floor(building.w / 4); window++) {
-                        if ((floor + window) % 3 !== 0) { // 일부 창문만 켜져있게
-                            const windowX = building.x + 2 + window * 4;
-                            const windowY = building.y + 2 + floor * 8;
-                            ctx.fillRect(windowX, windowY, 2, 3);
-                        }
+                if (ruin.destroyed) {
+                    // 불규칙한 파괴된 모양 만들기
+                    ctx.beginPath();
+                    ctx.moveTo(ruin.x, ruin.y + ruin.h);
+                    ctx.lineTo(ruin.x, ruin.y + ruin.h * 0.3);
+                    ctx.lineTo(ruin.x + ruin.w * 0.3, ruin.y + ruin.h * 0.2);
+                    ctx.lineTo(ruin.x + ruin.w * 0.7, ruin.y);
+                    ctx.lineTo(ruin.x + ruin.w, ruin.y + ruin.h * 0.4);
+                    ctx.lineTo(ruin.x + ruin.w, ruin.y + ruin.h);
+                    ctx.closePath();
+                    ctx.fill();
+                } else {
+                    ctx.fillRect(ruin.x, ruin.y, ruin.w, ruin.h);
+                }
+
+                // 파괴된 창문들 (불타는 오렌지/빨간 불빛)
+                if (Math.random() > 0.5) { // 일부 건물만 불타고 있음
+                    ctx.fillStyle = '#ff4400';
+                    for (let i = 0; i < 3; i++) {
+                        const fireX = ruin.x + Math.random() * ruin.w * 0.8;
+                        const fireY = ruin.y + Math.random() * ruin.h * 0.8;
+                        ctx.fillRect(fireX, fireY, 2, 3);
                     }
                 }
             });
 
-            // 도로들
-            ctx.fillStyle = '#2a2a2a';
-            // 수직 도로
-            ctx.fillRect(canvas.width * 0.71, canvas.height * 0.1, 3, canvas.height * 0.6);
-            ctx.fillRect(canvas.width * 0.79, canvas.height * 0.1, 3, canvas.height * 0.6);
-            ctx.fillRect(canvas.width * 0.87, canvas.height * 0.1, 3, canvas.height * 0.6);
-
-            // 수평 도로
-            ctx.fillRect(canvas.width * 0.68, canvas.height * 0.30, canvas.width * 0.25, 3);
-            ctx.fillRect(canvas.width * 0.68, canvas.height * 0.50, canvas.width * 0.25, 3);
-
-            // 도시 근처 나무들 (작은 공원과 가로수)
-            ctx.fillStyle = '#2d4a2d'; // 어두운 녹색
-
-            // 작은 공원 (도시 중앙)
-            const parkTrees = [
-                {x: canvas.width * 0.75, y: canvas.height * 0.65, size: 6},
-                {x: canvas.width * 0.77, y: canvas.height * 0.67, size: 5},
-                {x: canvas.width * 0.73, y: canvas.height * 0.68, size: 7},
-                {x: canvas.width * 0.78, y: canvas.height * 0.64, size: 4},
-                {x: canvas.width * 0.76, y: canvas.height * 0.70, size: 6}
+            // 폭탄 구덩이들 (크레이터)
+            ctx.fillStyle = '#1a1a1a';
+            const craters = [
+                {x: canvas.width * 0.71, y: canvas.height * 0.35, size: 8},
+                {x: canvas.width * 0.79, y: canvas.height * 0.55, size: 12},
+                {x: canvas.width * 0.85, y: canvas.height * 0.65, size: 6},
+                {x: canvas.width * 0.73, y: canvas.height * 0.72, size: 10},
+                {x: canvas.width * 0.87, y: canvas.height * 0.38, size: 7}
             ];
 
-            parkTrees.forEach(tree => {
+            craters.forEach(crater => {
                 ctx.beginPath();
-                ctx.arc(tree.x, tree.y, tree.size, 0, Math.PI * 2);
+                ctx.arc(crater.x, crater.y, crater.size, 0, Math.PI * 2);
                 ctx.fill();
+
+                // 크레이터 가장자리 (약간 밝은 색)
+                ctx.strokeStyle = '#3a3a3a';
+                ctx.lineWidth = 1;
+                ctx.stroke();
             });
 
-            // 가로수 (도로변)
-            ctx.fillStyle = '#3a5a3a';
-            for (let i = 0; i < 8; i++) {
-                const treeX = canvas.width * 0.68 + i * 25;
-                const treeY = canvas.height * 0.72;
-                ctx.beginPath();
-                ctx.arc(treeX, treeY, 4, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            // Zigzag trenches removed for cleaner battlefield look
 
-            // 해안가 나무들
-            ctx.fillStyle = '#2d4a2d';
-            for (let i = 0; i < 6; i++) {
-                const coastTreeX = canvas.width * 0.62 + i * 8;
-                const coastTreeY = canvas.height * 0.15 + i * 60;
+            // 연기 기둥들
+            const smokeColumns = [
+                {x: canvas.width * 0.74, y: canvas.height * 0.15, intensity: 0.8},
+                {x: canvas.width * 0.81, y: canvas.height * 0.08, intensity: 0.6},
+                {x: canvas.width * 0.89, y: canvas.height * 0.20, intensity: 0.9},
+                {x: canvas.width * 0.70, y: canvas.height * 0.45, intensity: 0.5}
+            ];
+
+            smokeColumns.forEach(smoke => {
+                const smokeAlpha = smoke.intensity * 0.4;
+                ctx.fillStyle = `rgba(60, 60, 60, ${smokeAlpha})`;
+
+                // 연기 기둥을 여러 개의 원으로 그리기
+                for (let i = 0; i < 8; i++) {
+                    const offsetX = Math.sin(i * 0.5) * 3;
+                    const smokeY = smoke.y - i * 8;
+                    const smokeSize = 4 + i * 0.8;
+
+                    ctx.beginPath();
+                    ctx.arc(smoke.x + offsetX, smokeY, smokeSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            // 불타는 잔해들
+            const burningDebris = [
+                {x: canvas.width * 0.69, y: canvas.height * 0.75, size: 4},
+                {x: canvas.width * 0.77, y: canvas.height * 0.73, size: 3},
+                {x: canvas.width * 0.83, y: canvas.height * 0.77, size: 5},
+                {x: canvas.width * 0.91, y: canvas.height * 0.74, size: 3}
+            ];
+
+            burningDebris.forEach(debris => {
+                // 불타는 잔해 (오렌지-빨강 그라디언트)
+                ctx.fillStyle = '#ff6600';
                 ctx.beginPath();
-                ctx.arc(coastTreeX, coastTreeY, 5 + Math.sin(i) * 2, 0, Math.PI * 2);
+                ctx.arc(debris.x, debris.y, debris.size, 0, Math.PI * 2);
                 ctx.fill();
-            }
+
+                // 불꽃 효과
+                ctx.fillStyle = '#ffaa00';
+                ctx.beginPath();
+                ctx.arc(debris.x, debris.y - 2, debris.size * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+            });
 
             ctx.restore();
         }
 
-        function drawMilitaryBuildings() {
-            ctx.save();
-
-            // 군사 기지 (우측 해안 상단)
-            const baseX = canvas.width * 0.78;
-            const baseY = canvas.height * 0.15;
-
-            // 군사 건물들 (정적)
-            const buildings = [
-                {x: baseX, y: baseY, w: 30, h: 20, color: '#6a6a6a'},
-                {x: baseX + 35, y: baseY, w: 25, h: 25, color: '#5a5a5a'},
-                {x: baseX, y: baseY + 30, w: 35, h: 15, color: '#7a7a7a'},
-                {x: baseX + 40, y: baseY + 30, w: 20, h: 20, color: '#6a6a6a'},
-                {x: baseX - 25, y: baseY + 15, w: 22, h: 22, color: '#5a5a5a'}
-            ];
-
-            buildings.forEach(building => {
-                ctx.fillStyle = building.color;
-                ctx.fillRect(building.x, building.y, building.w, building.h);
-
-                // 건물 디테일 (창문/문)
-                ctx.fillStyle = '#4a4a4a';
-                ctx.fillRect(building.x + 2, building.y + 2, building.w - 4, building.h - 4);
-            });
-
-            // 활주로 (회색 직사각형)
-            ctx.fillStyle = '#4a4a4a';
-            ctx.fillRect(canvas.width * 0.72, canvas.height * 0.6, 80, 8);
-
-            // 활주로 중앙선 (점선)
-            ctx.fillStyle = '#ffffff';
-            for (let x = canvas.width * 0.72; x < canvas.width * 0.72 + 80; x += 10) {
-                ctx.fillRect(x, canvas.height * 0.6 + 3, 5, 2);
-            }
-
-            // 레이더 타워
-            ctx.fillStyle = '#8a8a8a';
-            ctx.fillRect(canvas.width * 0.85, canvas.height * 0.25, 6, 15);
-            ctx.beginPath();
-            ctx.arc(canvas.width * 0.88, canvas.height * 0.25, 8, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
-        }
+        // Military base function removed
 
         function drawWaterEffects() {
             ctx.save();
@@ -2699,6 +3050,9 @@
             const percentage = (specialGauge / maxGauge) * 100;
             document.getElementById('gaugeFill').style.width = percentage + '%';
             document.getElementById('gaugeText').textContent = `필살기 게이지: ${Math.floor(percentage)}%`;
+            // Update overlay gauge as well
+            document.getElementById('overlayGaugeFill').style.width = percentage + '%';
+            document.getElementById('overlayGaugeText').textContent = `필살기 게이지: ${Math.floor(percentage)}%`;
         }
         
         function activateSpecialAttack() {
@@ -2779,6 +3133,7 @@
             }
 
             updateInventoryUI();
+            updateEquippedItemsDisplay();
             activateItemEffect(item.type);
 
             // Add sidekick when collecting item
@@ -2799,6 +3154,9 @@
                     break;
                 case 'homing':
                     homingActive = false;
+                    break;
+                case 'bouncing':
+                    bouncingActive = false;
                     break;
             }
         }
@@ -2836,6 +3194,10 @@
                     homingActive = true;
                     itemEffectTimers.homing = 10000;
                     break;
+                case 'bouncing':
+                    bouncingActive = true;
+                    itemEffectTimers.bouncing = 10000;
+                    break;
             }
         }
         
@@ -2847,22 +3209,81 @@
         function removeItemFromInventory(type) {
             playerItems = playerItems.filter(item => item.type !== type);
             updateInventoryUI();
+            updateEquippedItemsDisplay();
         }
         
         function updateInventoryUI() {
             for (let i = 0; i < maxItems; i++) {
                 const slot = document.getElementById(`slot${i}`);
+                const overlaySlot = document.getElementById(`overlaySlot${i}`);
                 if (i < playerItems.length) {
-                    slot.textContent = playerItems[i].symbol;
-                    slot.style.color = playerItems[i].color;
-                    slot.classList.add('filled');
+                    if (slot) {
+                        slot.textContent = playerItems[i].symbol;
+                        slot.style.color = playerItems[i].color;
+                        slot.classList.add('filled');
+                    }
+                    // Update overlay slot as well (with null check)
+                    if (overlaySlot) {
+                        overlaySlot.textContent = playerItems[i].symbol;
+                        overlaySlot.style.color = playerItems[i].color;
+                        overlaySlot.classList.add('filled');
+                    }
                 } else {
-                    slot.textContent = '';
-                    slot.classList.remove('filled');
+                    if (slot) {
+                        slot.textContent = '';
+                        slot.classList.remove('filled');
+                    }
+                    // Update overlay slot as well (with null check)
+                    if (overlaySlot) {
+                        overlaySlot.textContent = '';
+                        overlaySlot.classList.remove('filled');
+                    }
                 }
             }
         }
-        
+
+        function updateEquippedItemsDisplay() {
+            const itemDescriptions = {
+                multiShot: '다중 발사',
+                rapidFire: '연사 강화',
+                pierce: '관통 탄환',
+                homing: '유도 미사일',
+                bouncing: '바운싱 탄환'
+            };
+
+            const equippedItemsList = document.getElementById('equippedItemsList');
+            equippedItemsList.innerHTML = '';
+
+            if (playerItems.length === 0) {
+                const noItemsDiv = document.createElement('div');
+                noItemsDiv.style.color = '#888888';
+                noItemsDiv.style.textAlign = 'center';
+                noItemsDiv.style.fontStyle = 'italic';
+                noItemsDiv.textContent = '아이템 없음';
+                equippedItemsList.appendChild(noItemsDiv);
+                return;
+            }
+
+            playerItems.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'equipped-item';
+
+                const symbolDiv = document.createElement('div');
+                symbolDiv.className = 'equipped-item-symbol';
+                symbolDiv.textContent = item.symbol;
+                symbolDiv.style.backgroundColor = item.color;
+                symbolDiv.style.color = '#ffffff';
+
+                const descDiv = document.createElement('div');
+                descDiv.className = 'equipped-item-desc';
+                descDiv.textContent = itemDescriptions[item.type] || item.type;
+
+                itemDiv.appendChild(symbolDiv);
+                itemDiv.appendChild(descDiv);
+                equippedItemsList.appendChild(itemDiv);
+            });
+        }
+
         function startFlameWave() {
             flameWaveActive = true;
             flameWaveHeight = 0;
@@ -3001,19 +3422,24 @@
             rapidFireActive = false;
             pierceActive = false;
             homingActive = false;
+            bouncingActive = false;
             itemEffectTimers = {
                 multiShot: 0,
                 rapidFire: 0,
                 pierce: 0,
-                homing: 0
+                homing: 0,
+                bouncing: 0
             };
             bullets.length = 0;
             sidekickBullets.length = 0;
+            bouncingBullets.length = 0;
             enemies.length = 0;
             items.length = 0;
             sidekicks.length = 0;
             explosions.length = 0;
             itemSpawnTimer = 0;
+            lastShot = 0;
+            lastBouncingShot = 0;
             lastSidekickShot = 0;
             bossActive = false;
             currentBoss = null;
@@ -3022,6 +3448,7 @@
             updateScore();
             updateGauge();
             updateInventoryUI();
+            updateEquippedItemsDisplay();
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('pauseScreen').style.display = 'none';
         }
@@ -3030,15 +3457,19 @@
             switch(e.code) {
                 case 'ArrowLeft':
                     keys.left = true;
+                    e.preventDefault();
                     break;
                 case 'ArrowRight':
                     keys.right = true;
+                    e.preventDefault();
                     break;
                 case 'ArrowUp':
                     keys.up = true;
+                    e.preventDefault();
                     break;
                 case 'ArrowDown':
                     keys.down = true;
+                    e.preventDefault();
                     break;
                 case 'Space':
                     keys.space = true;
@@ -3083,10 +3514,20 @@
         
         // 랭킹 시스템 함수들
         function loadRankings() {
+            // 글로벌 명예의 전당 - 실제 플레이어 기록만 표시
+            const globalRankings = [];
+
             const saved = localStorage.getItem('galaxyShooterRankings');
+            let localRankings = [];
             if (saved) {
-                rankings = JSON.parse(saved);
+                localRankings = JSON.parse(saved);
             }
+
+            // 글로벌 랭킹과 로컬 랭킹을 합치고 정렬
+            rankings = [...globalRankings, ...localRankings];
+            rankings.sort((a, b) => b.score - a.score);
+            rankings = rankings.slice(0, maxRankings);
+
             updateLiveRankings(); // 랭킹 로드 후 표시 업데이트
         }
 
@@ -3106,10 +3547,12 @@
                         </div>
                     </div>
                 `;
+                // Update last updated date even when no rankings
+                updateLastUpdatedDate();
                 return;
             }
 
-            rankings.slice(0, 10).forEach((ranking, index) => {
+            rankings.slice(0, 5).forEach((ranking, index) => {
                 const medalIcons = ['🥇', '🥈', '🥉'];
                 const medal = index < 3 ? medalIcons[index] : `${index + 1}`;
 
@@ -3123,6 +3566,24 @@
                     </div>
                 `;
             });
+
+            // Update the last updated date
+            updateLastUpdatedDate();
+        }
+
+        function updateLastUpdatedDate() {
+            const lastUpdatedElement = document.getElementById('lastUpdated');
+            if (lastUpdatedElement) {
+                const now = new Date();
+                const koreanDate = now.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                lastUpdatedElement.textContent = `마지막 업데이트: ${koreanDate}`;
+            }
         }
 
         function saveRankings() {
@@ -3192,11 +3653,54 @@
 
                 rankingList.appendChild(rankElement);
             });
+
+            // 새로운 기록이 추가된 경우 축하 메시지와 다시 시작 버튼 표시
+            if (newRecord) {
+                const congratsElement = document.createElement('div');
+                congratsElement.style.cssText = 'text-align: center; margin-top: 20px; padding: 15px; background: rgba(0, 255, 255, 0.1); border-radius: 8px; border: 1px solid #00ffff;';
+                congratsElement.innerHTML = `
+                    <div style="color: #00ffff; font-size: 18px; margin-bottom: 10px;">🎉 기록이 저장되었습니다! 🎉</div>
+                    <button onclick="restartGameFromModal()" style="
+                        font-size: 18px;
+                        padding: 12px 24px;
+                        background: #00ffff;
+                        color: #000;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        margin: 5px;
+                    ">🚀 다시 시작</button>
+                    <button onclick="closeRanking()" style="
+                        font-size: 16px;
+                        padding: 10px 20px;
+                        background: #666;
+                        color: #fff;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        margin: 5px;
+                    ">닫기</button>
+                `;
+                rankingList.appendChild(congratsElement);
+            }
         }
 
         function closeRanking() {
             document.getElementById('rankingModal').style.display = 'none';
             document.getElementById('gameOver').style.display = 'block';
+        }
+
+        function restartGameFromModal() {
+            // 모달 닫기
+            document.getElementById('rankingModal').style.display = 'none';
+            // 게임 오버 화면 숨기기
+            document.getElementById('gameOver').style.display = 'none';
+            // 이름 입력 섹션 다시 보이기 (다음 게임을 위해)
+            document.getElementById('nameInputSection').style.display = 'block';
+            document.getElementById('nameInput').value = '';
+            // 게임 재시작
+            restartGame();
         }
 
         // Enter 키로 이름 저장
