@@ -7,18 +7,70 @@
     <style>
         body {
             margin: 0;
-            padding: 0;
+            padding: 20px;
             background: #000;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             min-height: 100vh;
             font-family: Arial, sans-serif;
+            gap: 30px;
         }
-        
+
         #gameContainer {
             text-align: center;
         }
+
+        #rankingContainer {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        #rankingTitle {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            border-left: 4px solid #FFD700;
+        }
+
+        .ranking-rank {
+            font-weight: bold;
+            font-size: 18px;
+            color: #FFD700;
+            min-width: 30px;
+        }
+
+        .ranking-score {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .ranking-date {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .ranking-item:nth-child(1) .ranking-rank { color: #FFD700; }
+        .ranking-item:nth-child(2) .ranking-rank { color: #C0C0C0; }
+        .ranking-item:nth-child(3) .ranking-rank { color: #CD7F32; }
         
         canvas {
             border: 2px solid #333;
@@ -92,6 +144,76 @@
             font-size: 24px;
             margin-top: 20px;
         }
+
+        #rankingModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+
+        #rankingContent {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid #0f3460;
+            border-radius: 10px;
+            padding: 30px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+
+        #nameInput {
+            background: #2a2a4e;
+            border: 2px solid #0080ff;
+            color: white;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            margin: 10px;
+            text-align: center;
+        }
+
+        #nameInput:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        #rankingList {
+            margin: 20px 0;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .rankingItem {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 15px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            border-left: 4px solid #00ffff;
+        }
+
+        .rankingItem.newRecord {
+            background: rgba(255, 215, 0, 0.2);
+            border-left-color: #ffd700;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
+            to { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+        }
         
         #pauseScreen {
             display: none;
@@ -131,6 +253,7 @@
                 <div class="item-slot" id="slot1"></div>
             </div>
             <div>방향키로 이동, Z키로 필살기, P키로 일시정지</div>
+            <div style="font-size: 12px; color: #aaa; margin-top: 5px;">⚠️ 5초간 가만히 있으면 카미카제 적군 출현!</div>
             <div id="pauseScreen">
                 <div>게임 일시정지</div>
                 <div style="font-size: 16px; margin-top: 10px;">P키를 눌러 계속</div>
@@ -138,6 +261,37 @@
             <div id="gameOver">
                 <div>게임 오버!</div>
                 <button onclick="restartGame()">다시 시작</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rankingModal">
+        <div id="rankingContent">
+            <h2 style="color: #00ffff; margin-bottom: 20px;">🏆 게임 결과 🏆</h2>
+            <div id="finalScore" style="font-size: 24px; color: #ffd700; margin-bottom: 20px;"></div>
+            <div id="nameInputSection">
+                <div style="margin-bottom: 10px;">이름을 입력하세요:</div>
+                <input type="text" id="nameInput" maxlength="10" placeholder="플레이어 이름">
+                <br>
+                <button onclick="saveScore()" style="margin-top: 15px;">기록 저장</button>
+            </div>
+            <div id="rankingList"></div>
+            <div style="margin-top: 20px;">
+                <button onclick="closeRanking()">닫기</button>
+                <button onclick="restartGame()">다시 시작</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rankingContainer">
+        <div id="rankingTitle">🏆 명예의 전당 🏆</div>
+        <div id="liveRankingList">
+            <div class="ranking-item">
+                <span class="ranking-rank">1</span>
+                <div>
+                    <div class="ranking-score">기록 없음</div>
+                    <div class="ranking-date">-</div>
+                </div>
             </div>
         </div>
     </div>
@@ -170,13 +324,27 @@
         let lastSidekickShot = 0;
         let explosions = [];
         let difficultyLevel = 1;
-        let maxDifficultyLevel = 20;
+        let maxDifficultyLevel = 999;
+        let rankings = [];
+        let maxRankings = 10;
+        let lastMovementTime = 0;
+        let idleThreshold = 5000; // 5초
+        let kamikazeActive = false;
+        let kamikazeEnemy = null;
+        let playerLastX = 0;
+        let playerLastY = 0;
+        let bossActive = false;
+        let currentBoss = null;
+        let lastStage = 0;
+        let flameWave = [];
+        let flameWaveActive = false;
+        let flameWaveHeight = 0;
         let baseEnemySpawnRate = 45;
         let currentEnemySpawnRate = 42;
         let basePlayerSpeed = 5;
         let currentPlayerSpeed = 5.15;
-        let baseShotDelay = 150;
-        let currentShotDelay = 146;
+        let baseShotDelay = 60;
+        let currentShotDelay = 57;
         let enemySpeedMultiplier = 1.05;
         
         const keys = {
@@ -216,97 +384,154 @@
             constructor() {
                 super(canvas.width / 2 - 20, canvas.height - 60, 40, 50, '#00ff00');
                 this.baseSpeed = 5;
+                this.autoPilotTargetX = this.x;
+                this.autoPilotTargetY = this.y;
             }
             
             update() {
                 const speed = currentPlayerSpeed;
+                let moved = false;
+
                 if (keys.left && this.x > 0) {
                     this.x -= speed;
+                    moved = true;
                 }
                 if (keys.right && this.x < canvas.width - this.width) {
                     this.x += speed;
+                    moved = true;
                 }
                 if (keys.up && this.y > 0) {
                     this.y -= speed;
+                    moved = true;
                 }
                 if (keys.down && this.y < canvas.height - this.height) {
                     this.y += speed;
+                    moved = true;
+                }
+
+                // 움직임 감지 (카미카제 적은 제거하지 않음)
+                if (moved || this.x !== playerLastX || this.y !== playerLastY) {
+                    lastMovementTime = Date.now();
+                    playerLastX = this.x;
+                    playerLastY = this.y;
+                }
+
+                // 카미카제 적 스폰 체크 (플레이어가 가만히 있으면 계속 스폰)
+                if (Date.now() - lastMovementTime > idleThreshold) {
+                    // 3초마다 새로운 카미카제 적 스폰
+                    if (Date.now() - lastMovementTime > idleThreshold && (Date.now() - lastMovementTime) % 3000 < 100) {
+                        spawnKamikazeEnemy();
+                    }
                 }
             }
             
             draw() {
                 const centerX = this.x + this.width / 2;
                 const centerY = this.y + this.height / 2;
-                
-                // Engine flames
-                ctx.fillStyle = '#ff6600';
+
+                ctx.save();
+
+                // 현대식 전투기 스타일 (F-22 랩터 같은 느낌)
+
+                // 제트 엔진 배기 (이중 엔진)
+                const exhaustGradient = ctx.createLinearGradient(centerX, this.y + this.height, centerX, this.y + this.height + 12);
+                exhaustGradient.addColorStop(0, '#0099ff');
+                exhaustGradient.addColorStop(0.3, '#0066cc');
+                exhaustGradient.addColorStop(0.7, '#004499');
+                exhaustGradient.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = exhaustGradient;
+                // 이중 제트 엔진
+                ctx.fillRect(centerX - 6, this.y + this.height, 4, 12);
+                ctx.fillRect(centerX + 2, this.y + this.height, 4, 12);
+
+                // 메인 동체 (스텔스 회색)
+                const fuselageGradient = ctx.createLinearGradient(centerX - 10, centerY, centerX + 10, centerY);
+                fuselageGradient.addColorStop(0, '#4a4a5a');
+                fuselageGradient.addColorStop(0.5, '#5a5a6a');
+                fuselageGradient.addColorStop(1, '#4a4a5a');
+
+                ctx.fillStyle = fuselageGradient;
+                ctx.fillRect(centerX - 10, this.y + 8, 20, 36);
+
+                // 델타 날개 (스텔스 형태)
+                const wingGradient = ctx.createLinearGradient(this.x - 22, centerY, this.x + this.width + 22, centerY);
+                wingGradient.addColorStop(0, '#5a5a6a');
+                wingGradient.addColorStop(0.5, '#6a6a7a');
+                wingGradient.addColorStop(1, '#5a5a6a');
+
+                ctx.fillStyle = wingGradient;
+
+                // 좌측 델타 날개 (삼각형 모양)
                 ctx.beginPath();
-                ctx.ellipse(centerX - 8, this.y + this.height + 5, 3, 8, 0, 0, 2 * Math.PI);
+                ctx.moveTo(this.x - 20, this.y + 30);
+                ctx.lineTo(centerX - 8, this.y + 18);
+                ctx.lineTo(centerX - 8, this.y + 26);
+                ctx.closePath();
                 ctx.fill();
+
+                // 우측 델타 날개
                 ctx.beginPath();
-                ctx.ellipse(centerX + 8, this.y + this.height + 5, 3, 8, 0, 0, 2 * Math.PI);
+                ctx.moveTo(this.x + this.width + 20, this.y + 30);
+                ctx.lineTo(centerX + 8, this.y + 18);
+                ctx.lineTo(centerX + 8, this.y + 26);
+                ctx.closePath();
                 ctx.fill();
-                
-                ctx.fillStyle = '#ffff00';
-                ctx.beginPath();
-                ctx.ellipse(centerX - 8, this.y + this.height + 3, 2, 5, 0, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(centerX + 8, this.y + this.height + 3, 2, 5, 0, 0, 2 * Math.PI);
-                ctx.fill();
-                
-                // Main body (metallic blue)
-                ctx.fillStyle = '#4A90E2';
-                ctx.beginPath();
-                ctx.ellipse(centerX, centerY, 8, 20, 0, 0, 2 * Math.PI);
-                ctx.fill();
-                
-                // Nose cone (bright silver)
-                ctx.fillStyle = '#C0C0C0';
+
+                // 기수 (스텔스 각진 형태)
+                const noseGradient = ctx.createLinearGradient(centerX, this.y, centerX, this.y + 15);
+                noseGradient.addColorStop(0, '#6a6a7a');
+                noseGradient.addColorStop(1, '#5a5a6a');
+
+                ctx.fillStyle = noseGradient;
                 ctx.beginPath();
                 ctx.moveTo(centerX, this.y);
-                ctx.lineTo(centerX - 6, this.y + 15);
-                ctx.lineTo(centerX + 6, this.y + 15);
+                ctx.lineTo(centerX - 8, this.y + 12);
+                ctx.lineTo(centerX + 8, this.y + 12);
                 ctx.closePath();
                 ctx.fill();
-                
-                // Wings (darker blue)
-                ctx.fillStyle = '#2E5C8A';
+
+                // 조종석 (어두운 캐노피)
+                ctx.fillStyle = '#1a1a2a';
+                ctx.fillRect(centerX - 4, this.y + 10, 8, 12);
+
+                // 레이더 흡수 재료 디테일
+                ctx.strokeStyle = '#3a3a4a';
+                ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(this.x, centerY + 5);
-                ctx.lineTo(this.x - 10, centerY + 15);
-                ctx.lineTo(this.x + 5, centerY + 15);
-                ctx.closePath();
-                ctx.fill();
-                
-                ctx.beginPath();
-                ctx.moveTo(this.x + this.width, centerY + 5);
-                ctx.lineTo(this.x + this.width + 10, centerY + 15);
-                ctx.lineTo(this.x + this.width - 5, centerY + 15);
-                ctx.closePath();
-                ctx.fill();
-                
-                // Cockpit (bright cyan)
-                ctx.fillStyle = '#00FFFF';
-                ctx.beginPath();
-                ctx.ellipse(centerX, this.y + 12, 4, 6, 0, 0, 2 * Math.PI);
-                ctx.fill();
-                
-                // Wing details (green lights)
-                ctx.fillStyle = '#00FF00';
-                ctx.beginPath();
-                ctx.ellipse(this.x - 5, centerY + 10, 2, 2, 0, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(this.x + this.width + 5, centerY + 10, 2, 2, 0, 0, 2 * Math.PI);
-                ctx.fill();
+                ctx.moveTo(centerX - 8, this.y + 15);
+                ctx.lineTo(centerX + 8, this.y + 15);
+                ctx.moveTo(centerX - 8, this.y + 25);
+                ctx.lineTo(centerX + 8, this.y + 25);
+                ctx.stroke();
+
+                // 현대식 마킹 (별과 바)
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(centerX - 8, this.y + 30, 4, 2);
+                ctx.fillRect(centerX + 4, this.y + 30, 4, 2);
+
+                ctx.fillStyle = '#0066cc';
+                ctx.fillRect(centerX - 7, this.y + 30.5, 2, 1);
+                ctx.fillRect(centerX + 5, this.y + 30.5, 2, 1);
+
+                // 미사일 하드포인트
+                ctx.fillStyle = '#666';
+                ctx.fillRect(this.x - 18, this.y + 25, 3, 2);
+                ctx.fillRect(this.x + this.width + 15, this.y + 25, 3, 2);
+
+                // 공기 흡입구
+                ctx.fillStyle = '#2a2a3a';
+                ctx.fillRect(centerX - 8, this.y + 20, 3, 6);
+                ctx.fillRect(centerX + 5, this.y + 20, 3, 6);
+
+                ctx.restore();
             }
         }
         
         class Bullet extends GameObject {
             constructor(x, y, isHoming = false, isPierce = false) {
                 super(x, y, 4, 10, '#ffff00');
-                this.speed = 8;
+                this.speed = isHoming ? 7.2 : 12; // 호밍 미사일은 60% 속도
                 this.isHoming = isHoming;
                 this.isPierce = isPierce;
                 this.hitEnemies = [];
@@ -316,7 +541,7 @@
                 if (this.isHoming && enemies.length > 0) {
                     let nearestEnemy = enemies[0];
                     let minDistance = this.distanceTo(nearestEnemy);
-                    
+
                     enemies.forEach(enemy => {
                         const distance = this.distanceTo(enemy);
                         if (distance < minDistance) {
@@ -324,14 +549,14 @@
                             nearestEnemy = enemy;
                         }
                     });
-                    
+
                     const dx = (nearestEnemy.x + nearestEnemy.width/2) - (this.x + this.width/2);
                     const dy = (nearestEnemy.y + nearestEnemy.height/2) - (this.y + this.height/2);
                     const distance = Math.sqrt(dx*dx + dy*dy);
-                    
+
                     if (distance > 0) {
-                        this.x += (dx / distance) * this.speed * 0.3;
-                        this.y += (dy / distance) * this.speed * 0.3;
+                        this.x += (dx / distance) * this.speed;
+                        this.y += (dy / distance) * this.speed;
                     }
                 } else {
                     this.y -= this.speed;
@@ -356,6 +581,664 @@
             }
         }
         
+        class KamikazeEnemy extends GameObject {
+            constructor(x, y, targetX, targetY) {
+                super(x, y, 35, 40, '#ff0000');
+                this.targetX = targetX;
+                this.targetY = targetY;
+                this.speed = 6;
+                this.isKamikaze = true;
+
+                // 타겟 방향 계산
+                const dx = targetX - x;
+                const dy = targetY - y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                this.vx = (dx / distance) * this.speed;
+                this.vy = (dy / distance) * this.speed;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+            }
+
+            draw() {
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+
+                // 카미카제 적 디자인 (빨간색 + 경고 효과)
+                const warningGradient = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, 20);
+                warningGradient.addColorStop(0, '#FF0000');
+                warningGradient.addColorStop(0.7, '#AA0000');
+                warningGradient.addColorStop(1, '#660000');
+
+                ctx.fillStyle = warningGradient;
+                ctx.beginPath();
+                ctx.moveTo(centerX, this.y);
+                ctx.lineTo(centerX - 15, this.y + 15);
+                ctx.lineTo(centerX - 10, centerY);
+                ctx.lineTo(centerX - 8, this.y + 30);
+                ctx.lineTo(centerX - 4, this.y + this.height);
+                ctx.lineTo(centerX + 4, this.y + this.height);
+                ctx.lineTo(centerX + 8, this.y + 30);
+                ctx.lineTo(centerX + 10, centerY);
+                ctx.lineTo(centerX + 15, this.y + 15);
+                ctx.closePath();
+                ctx.fill();
+
+                // 경고 표시
+                ctx.shadowColor = '#FF0000';
+                ctx.shadowBlur = 15;
+                ctx.fillStyle = '#FFFF00';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('!', centerX, centerY + 3);
+                ctx.textAlign = 'left';
+                ctx.shadowBlur = 0;
+
+                // 추진 효과
+                const engineGradient = ctx.createRadialGradient(centerX, this.y + this.height + 8, 2, centerX, this.y + this.height + 8, 12);
+                engineGradient.addColorStop(0, '#FFFFFF');
+                engineGradient.addColorStop(0.3, '#FF4500');
+                engineGradient.addColorStop(0.7, '#FF0000');
+                engineGradient.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = engineGradient;
+                ctx.beginPath();
+                ctx.ellipse(centerX, this.y + this.height + 8, 8, 15, 0, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+        class BossEnemy extends GameObject {
+            constructor(stageScore) {
+                super(canvas.width / 2 - 60, -120, 120, 100, '#000000');
+                this.hp = stageScore; // 스테이지 점수만큼의 HP
+                this.maxHp = stageScore;
+                this.speed = 1;
+                this.shootTimer = 0;
+                this.moveTimer = 0;
+                this.moveDirection = 1;
+                this.isBoss = true;
+                this.phase = 1;
+                this.attackPattern = 0;
+                this.patternTimer = 0;
+            }
+
+            update() {
+                // 보스 등장 애니메이션 (위에서 내려옴)
+                if (this.y < 50) {
+                    this.y += this.speed;
+                } else {
+                    // 좌우 움직임 (더 느리게)
+                    this.moveTimer++;
+                    if (this.moveTimer > 200) { // 120에서 200으로 증가 (더 오래 한 방향으로 이동)
+                        this.moveDirection *= -1;
+                        this.moveTimer = 0;
+                    }
+                    this.x += this.moveDirection * 1.5; // 2에서 1.5로 감소 (움직임 속도도 조금 느리게)
+
+                    // 경계 체크
+                    if (this.x < 0) {
+                        this.x = 0;
+                        this.moveDirection = 1;
+                    }
+                    if (this.x > canvas.width - this.width) {
+                        this.x = canvas.width - this.width;
+                        this.moveDirection = -1;
+                    }
+
+                    // 공격 패턴
+                    this.patternTimer++;
+                    this.updateAttackPattern();
+                }
+            }
+
+            updateAttackPattern() {
+                // HP에 따른 페이즈 변경
+                if (this.hp < this.maxHp * 0.3 && this.phase === 1) {
+                    this.phase = 2;
+                    this.attackPattern = 0;
+                    this.patternTimer = 0;
+                }
+
+                if (this.phase === 1) {
+                    // 페이즈 1: 직선 발사
+                    if (this.patternTimer % 60 === 0) {
+                        this.shootStraight();
+                    }
+                } else {
+                    // 페이즈 2: 산탄 발사
+                    if (this.patternTimer % 40 === 0) {
+                        this.shootSpread();
+                    }
+                }
+            }
+
+            shootStraight() {
+                // 플레이어 방향으로 직선 발사
+                const centerX = this.x + this.width / 2;
+                enemies.push(new BossBullet(centerX - 5, this.y + this.height, 0));
+                enemies.push(new BossBullet(centerX + 5, this.y + this.height, 0));
+            }
+
+            shootSpread() {
+                // 산탄 발사
+                const centerX = this.x + this.width / 2;
+                for (let i = -2; i <= 2; i++) {
+                    enemies.push(new BossBullet(centerX, this.y + this.height, i * 0.5));
+                }
+            }
+
+            takeDamage(damage = 1) {
+                this.hp -= damage;
+                if (this.hp <= 0) {
+                    // 보스 처치시 폭발 효과
+                    for (let i = 0; i < 10; i++) {
+                        createExplosion(
+                            this.x + Math.random() * this.width,
+                            this.y + Math.random() * this.height
+                        );
+                    }
+                    if (bossActive) { // 정상적인 보스 처치시에만 점수 증가
+                        const stageScore = difficultyLevel * 500;
+                        score += Math.floor(stageScore * 0.5); // 스테이지 점수의 50%
+                    }
+                    bossActive = false;
+                    currentBoss = null;
+
+                    // 보스 처치 후 보스 탄환 모두 제거
+                    enemies = enemies.filter(enemy => !enemy.isBossBullet);
+
+                    // 스테이지 클리어 메시지
+                    showStageClearMessage();
+
+                    // 보스 처치 후 지연된 스테이지 진행 체크
+                    setTimeout(() => {
+                        updateDifficulty();
+                    }, 1000);
+
+                    return true;
+                }
+                return false;
+            }
+
+            draw() {
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+
+                // 대형 전투기 스타일 (레퍼런스 이미지와 유사)
+                ctx.save();
+
+                // 메인 동체 (대형 전투기)
+                const fuselageGradient = ctx.createLinearGradient(centerX - 60, centerY, centerX + 60, centerY);
+                fuselageGradient.addColorStop(0, '#2a2a2a');
+                fuselageGradient.addColorStop(0.3, '#4a4a4a');
+                fuselageGradient.addColorStop(0.7, '#3a3a3a');
+                fuselageGradient.addColorStop(1, '#2a2a2a');
+
+                ctx.fillStyle = fuselageGradient;
+                ctx.fillRect(centerX - 50, this.y + 15, 100, 70);
+
+                // 기수 (뾰족한 형태)
+                const noseGradient = ctx.createLinearGradient(centerX, this.y, centerX, this.y + 20);
+                noseGradient.addColorStop(0, '#5a5a5a');
+                noseGradient.addColorStop(1, '#4a4a4a');
+
+                ctx.fillStyle = noseGradient;
+                ctx.beginPath();
+                ctx.moveTo(centerX, this.y);
+                ctx.lineTo(centerX - 20, this.y + 18);
+                ctx.lineTo(centerX + 20, this.y + 18);
+                ctx.closePath();
+                ctx.fill();
+
+                // 대형 날개 (좌우)
+                const wingGradient = ctx.createLinearGradient(centerX - 80, centerY, centerX + 80, centerY);
+                wingGradient.addColorStop(0, '#3a3a3a');
+                wingGradient.addColorStop(0.5, '#5a5a5a');
+                wingGradient.addColorStop(1, '#3a3a3a');
+
+                ctx.fillStyle = wingGradient;
+                // 좌측 날개
+                ctx.fillRect(this.x - 40, this.y + 35, 50, 20);
+                // 우측 날개
+                ctx.fillRect(this.x + this.width - 10, this.y + 35, 50, 20);
+
+                // 엔진 (6개의 제트 엔진)
+                const engineGradient = ctx.createLinearGradient(centerX, this.y + this.height - 15, centerX, this.y + this.height);
+                engineGradient.addColorStop(0, '#0099ff');
+                engineGradient.addColorStop(0.5, '#0066cc');
+                engineGradient.addColorStop(1, '#004499');
+
+                ctx.fillStyle = engineGradient;
+                // 메인 엔진들
+                ctx.fillRect(centerX - 35, this.y + this.height - 15, 8, 15);
+                ctx.fillRect(centerX - 20, this.y + this.height - 15, 8, 15);
+                ctx.fillRect(centerX - 5, this.y + this.height - 15, 8, 15);
+                ctx.fillRect(centerX + 10, this.y + this.height - 15, 8, 15);
+                ctx.fillRect(centerX + 25, this.y + this.height - 15, 8, 15);
+                ctx.fillRect(centerX + 40, this.y + this.height - 15, 8, 15);
+
+                // Aircraft cockpit and nose section
+                const cockpitGradient = ctx.createLinearGradient(centerX, this.y + 15, centerX, this.y + 45);
+                cockpitGradient.addColorStop(0, '#6A8CAF');
+                cockpitGradient.addColorStop(0.5, '#4F6F8F');
+                cockpitGradient.addColorStop(1, '#2A3A4A');
+                ctx.fillStyle = cockpitGradient;
+
+                // Main cockpit canopy
+                ctx.fillRect(centerX - 20, this.y + 15, 40, 25);
+
+                // Cockpit windows (transparent blue)
+                ctx.fillStyle = 'rgba(100, 150, 255, 0.7)';
+                ctx.fillRect(centerX - 15, this.y + 18, 30, 8);
+                ctx.fillRect(centerX - 12, this.y + 28, 24, 6);
+
+                // Nose cone and radar equipment
+                ctx.fillStyle = '#404040';
+                ctx.fillRect(centerX - 8, this.y + 5, 16, 15);
+
+                // Radar dome
+                ctx.fillStyle = '#555555';
+                ctx.beginPath();
+                ctx.arc(centerX, this.y + 12, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Twin jet engines
+                const twinEngineGradient = ctx.createLinearGradient(0, this.y + this.height - 12, 0, this.y + this.height);
+                twinEngineGradient.addColorStop(0, '#404040');
+                twinEngineGradient.addColorStop(0.5, '#2A2A2A');
+                twinEngineGradient.addColorStop(1, '#1A1A1A');
+                ctx.fillStyle = twinEngineGradient;
+
+                // Left engine nacelle
+                ctx.fillRect(centerX - 30, this.y + this.height - 12, 18, 12);
+                // Right engine nacelle
+                ctx.fillRect(centerX + 12, this.y + this.height - 12, 18, 12);
+
+                // Engine intakes
+                ctx.fillStyle = '#1A1A1A';
+                ctx.fillRect(centerX - 28, this.y + this.height - 10, 14, 8);
+                ctx.fillRect(centerX + 14, this.y + this.height - 10, 14, 8);
+
+                // Wing-mounted weapon systems
+                ctx.fillStyle = '#333333';
+
+                // Left wing weapons
+                // Gun pod
+                ctx.fillRect(centerX - 45, this.y + 35, 12, 6);
+                ctx.fillStyle = '#1A1A1A';
+                ctx.fillRect(centerX - 43, this.y + 33, 2, 4); // Gun barrel
+                ctx.fillRect(centerX - 39, this.y + 33, 2, 4); // Gun barrel
+
+                // Missile hardpoints
+                ctx.fillStyle = '#2A2A2A';
+                for (let i = 0; i < 2; i++) {
+                    ctx.fillRect(centerX - 50 + i * 8, this.y + 45 + i * 8, 8, 4);
+                    // Missiles
+                    ctx.fillStyle = '#404040';
+                    ctx.fillRect(centerX - 48 + i * 8, this.y + 43 + i * 8, 4, 12);
+                    ctx.fillStyle = '#2A2A2A';
+                }
+
+                // Right wing weapons (mirrored)
+                ctx.fillStyle = '#333333';
+                ctx.fillRect(centerX + 33, this.y + 35, 12, 6);
+                ctx.fillStyle = '#1A1A1A';
+                ctx.fillRect(centerX + 35, this.y + 33, 2, 4); // Gun barrel
+                ctx.fillRect(centerX + 39, this.y + 33, 2, 4); // Gun barrel
+
+                // Right missile hardpoints
+                ctx.fillStyle = '#2A2A2A';
+                for (let i = 0; i < 2; i++) {
+                    ctx.fillRect(centerX + 42 + i * 8, this.y + 45 + i * 8, 8, 4);
+                    // Missiles
+                    ctx.fillStyle = '#404040';
+                    ctx.fillRect(centerX + 44 + i * 8, this.y + 43 + i * 8, 4, 12);
+                    ctx.fillStyle = '#2A2A2A';
+                }
+
+                // Engine afterburner effects
+                const leftEngineGlow = ctx.createRadialGradient(centerX - 21, this.y + this.height - 6, 0, centerX - 21, this.y + this.height - 6, 15);
+                leftEngineGlow.addColorStop(0, '#FFAA00');
+                leftEngineGlow.addColorStop(0.3, '#FF6600');
+                leftEngineGlow.addColorStop(0.7, '#FF3300');
+                leftEngineGlow.addColorStop(1, 'rgba(255, 51, 0, 0)');
+
+                ctx.fillStyle = leftEngineGlow;
+                ctx.fillRect(centerX - 30, this.y + this.height - 8, 18, 8);
+
+                const rightEngineGlow = ctx.createRadialGradient(centerX + 21, this.y + this.height - 6, 0, centerX + 21, this.y + this.height - 6, 15);
+                rightEngineGlow.addColorStop(0, '#FFAA00');
+                rightEngineGlow.addColorStop(0.3, '#FF6600');
+                rightEngineGlow.addColorStop(0.7, '#FF3300');
+                rightEngineGlow.addColorStop(1, 'rgba(255, 51, 0, 0)');
+
+                ctx.fillStyle = rightEngineGlow;
+                ctx.fillRect(centerX + 12, this.y + this.height - 8, 18, 8);
+
+                // Aircraft panel lines and details
+                ctx.strokeStyle = '#555555';
+                ctx.lineWidth = 0.8;
+                ctx.beginPath();
+
+                // Fuselage center line
+                ctx.moveTo(centerX, this.y + 40);
+                ctx.lineTo(centerX, this.y + this.height * 0.85);
+
+                // Wing panel lines
+                ctx.moveTo(centerX - 25, this.y + 50);
+                ctx.lineTo(centerX - 15, this.y + this.height * 0.7);
+                ctx.moveTo(centerX + 25, this.y + 50);
+                ctx.lineTo(centerX + 15, this.y + this.height * 0.7);
+
+                // Engine separation lines
+                ctx.moveTo(centerX - 35, this.y + 60);
+                ctx.lineTo(centerX - 25, this.y + this.height * 0.8);
+                ctx.moveTo(centerX + 35, this.y + 60);
+                ctx.lineTo(centerX + 25, this.y + this.height * 0.8);
+
+                ctx.stroke();
+
+                // Aircraft markings and insignia
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = '8px Arial';
+                ctx.fillText('AF-01', centerX - 12, this.y + 70);
+
+                // Warning stripes on weapons
+                ctx.strokeStyle = '#FFFF00';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                for (let i = 0; i < 3; i++) {
+                    ctx.moveTo(centerX - 48 + i * 2, this.y + 47);
+                    ctx.lineTo(centerX - 46 + i * 2, this.y + 49);
+                    ctx.moveTo(centerX + 44 + i * 2, this.y + 47);
+                    ctx.lineTo(centerX + 46 + i * 2, this.y + 49);
+                }
+                ctx.stroke();
+
+                ctx.restore();
+
+                // HP 바
+                const hpBarWidth = this.width;
+                const hpBarHeight = 8;
+                const hpPercentage = this.hp / this.maxHp;
+
+                ctx.fillStyle = '#333333';
+                ctx.fillRect(this.x, this.y - 15, hpBarWidth, hpBarHeight);
+
+                ctx.fillStyle = hpPercentage > 0.3 ? '#00FF00' : '#FF0000';
+                ctx.fillRect(this.x, this.y - 15, hpBarWidth * hpPercentage, hpBarHeight);
+
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(this.x, this.y - 15, hpBarWidth, hpBarHeight);
+
+                // 페이즈 2에서 빨간 경고 효과
+                if (this.phase === 2) {
+                    ctx.shadowColor = '#FF0000';
+                    ctx.shadowBlur = 10;
+                    ctx.strokeStyle = '#FF0000';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(this.x - 5, this.y - 5, this.width + 10, this.height + 10);
+                    ctx.shadowBlur = 0;
+                }
+            }
+        }
+
+        class BossBullet extends GameObject {
+            constructor(x, y, angle) {
+                super(x, y, 8, 12, '#FF0000');
+                this.speed = 4;
+                this.angle = angle;
+                this.vx = Math.sin(angle) * this.speed;
+                this.vy = this.speed;
+                this.isBossBullet = true;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // 보스 총알은 화면을 벗어나면 다시 위에서 나타남 (순환)
+                if (this.y > canvas.height + 20) {
+                    this.y = -20;
+                }
+                if (this.x < -20) {
+                    this.x = canvas.width + 20;
+                } else if (this.x > canvas.width + 20) {
+                    this.x = -20;
+                }
+                if (this.y < -20) {
+                    this.y = canvas.height + 20;
+                }
+            }
+
+            draw() {
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+
+                // 빨간 에너지 탄환
+                const bulletGradient = ctx.createRadialGradient(centerX, centerY, 2, centerX, centerY, 6);
+                bulletGradient.addColorStop(0, '#FFFF00');
+                bulletGradient.addColorStop(0.5, '#FF4500');
+                bulletGradient.addColorStop(1, '#FF0000');
+
+                ctx.fillStyle = bulletGradient;
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY, 4, 6, 0, 0, 2 * Math.PI);
+                ctx.fill();
+
+                ctx.shadowColor = '#FF0000';
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY, 2, 3, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        class UAPBullet extends GameObject {
+            constructor(x, y, vx, vy) {
+                super(x, y, 6, 14, '#00FFAA');
+                this.vx = vx;
+                this.vy = vy;
+                this.isUAPBullet = true;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // UAP 총알은 화면을 벗어나면 제거됨 (BossBullet과 달리 순환하지 않음)
+                if (this.y < -20 || this.y > canvas.height + 20 ||
+                    this.x < -20 || this.x > canvas.width + 20) {
+                    return true; // 제거 신호
+                }
+                return false;
+            }
+
+            draw() {
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+
+                // 외계 에너지 빔 효과 (청록색)
+                const bulletGradient = ctx.createRadialGradient(centerX, centerY, 1, centerX, centerY, 7);
+                bulletGradient.addColorStop(0, '#FFFFFF');
+                bulletGradient.addColorStop(0.3, '#00FFFF');
+                bulletGradient.addColorStop(0.7, '#00CCAA');
+                bulletGradient.addColorStop(1, '#004455');
+
+                ctx.fillStyle = bulletGradient;
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY, 3, 7, 0, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // 내부 밝은 코어
+                ctx.shadowColor = '#00FFAA';
+                ctx.shadowBlur = 12;
+                ctx.fillStyle = '#AAFFFF';
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY, 1.5, 4, 0, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // 에너지 파장 효과
+                ctx.shadowBlur = 6;
+                ctx.strokeStyle = '#00FFAA';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY, 4, 8, 0, 0, 2 * Math.PI);
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        class EliteEnemy extends GameObject {
+            constructor(x, y, hp) {
+                super(x, y, 40, 45, '#ff0000');
+                this.baseSpeed = 1.5 + Math.random() * 1;
+                this.speed = this.baseSpeed * enemySpeedMultiplier;
+                this.type = Math.floor(Math.random() * 3);
+                this.hp = hp;
+                this.maxHp = hp;
+                this.isElite = true;
+            }
+
+            takeDamage(damage = 1) {
+                this.hp -= damage;
+                if (this.hp <= 0) {
+                    return true; // 처치됨
+                }
+                return false;
+            }
+
+            update() {
+                this.y += this.speed;
+            }
+
+            draw() {
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+
+                // 강화 적은 기존 디자인에 황금색 테두리와 HP 바 추가
+                if (this.type === 0) {
+                    // UAP 강화형
+                    const uapGradient = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, 20);
+                    uapGradient.addColorStop(0, '#FFD700');
+                    uapGradient.addColorStop(0.4, '#FFA500');
+                    uapGradient.addColorStop(0.8, '#FF8C00');
+                    uapGradient.addColorStop(1, '#FF4500');
+
+                    ctx.fillStyle = uapGradient;
+                    ctx.beginPath();
+                    ctx.ellipse(centerX, centerY, 18, 10, 0, 0, 2 * Math.PI);
+                    ctx.fill();
+
+                    // 상단 돔
+                    const domeGradient = ctx.createRadialGradient(centerX, centerY - 3, 2, centerX, centerY - 3, 12);
+                    domeGradient.addColorStop(0, '#FFFF00');
+                    domeGradient.addColorStop(0.6, '#FFD700');
+                    domeGradient.addColorStop(1, '#FFA500');
+
+                    ctx.fillStyle = domeGradient;
+                    ctx.beginPath();
+                    ctx.ellipse(centerX, centerY - 3, 12, 6, 0, 0, 2 * Math.PI);
+                    ctx.fill();
+
+                    // 황금 빛
+                    ctx.shadowColor = '#FFD700';
+                    ctx.shadowBlur = 15;
+                    ctx.fillStyle = 'rgba(255, 215, 0, 0.5)';
+                    ctx.beginPath();
+                    ctx.ellipse(centerX, centerY, 22, 12, 0, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                } else if (this.type === 1) {
+                    // TIE Fighter 강화형
+                    const imperialGold = '#FFD700';
+                    const darkGold = '#B8860B';
+
+                    // 중앙 조종실
+                    const cockpitGradient = ctx.createRadialGradient(centerX, centerY, 3, centerX, centerY, 10);
+                    cockpitGradient.addColorStop(0, '#FFD700');
+                    cockpitGradient.addColorStop(0.7, '#DAA520');
+                    cockpitGradient.addColorStop(1, '#B8860B');
+
+                    ctx.fillStyle = cockpitGradient;
+                    ctx.beginPath();
+                    ctx.ellipse(centerX, centerY, 10, 10, 0, 0, 2 * Math.PI);
+                    ctx.fill();
+
+                    // 황금 솔라 패널
+                    ctx.fillStyle = imperialGold;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x - 18, centerY - 12);
+                    ctx.lineTo(this.x - 5, centerY - 14);
+                    ctx.lineTo(this.x - 2, centerY - 10);
+                    ctx.lineTo(this.x - 2, centerY + 10);
+                    ctx.lineTo(this.x - 5, centerY + 14);
+                    ctx.lineTo(this.x - 18, centerY + 12);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width + 18, centerY - 12);
+                    ctx.lineTo(this.x + this.width + 5, centerY - 14);
+                    ctx.lineTo(this.x + this.width + 2, centerY - 10);
+                    ctx.lineTo(this.x + this.width + 2, centerY + 10);
+                    ctx.lineTo(this.x + this.width + 5, centerY + 14);
+                    ctx.lineTo(this.x + this.width + 18, centerY + 12);
+                    ctx.closePath();
+                    ctx.fill();
+
+                } else {
+                    // 강화 구축함
+                    const goldGradient = ctx.createLinearGradient(centerX, this.y, centerX, this.y + this.height);
+                    goldGradient.addColorStop(0, '#FFD700');
+                    goldGradient.addColorStop(0.5, '#DAA520');
+                    goldGradient.addColorStop(1, '#B8860B');
+
+                    ctx.fillStyle = goldGradient;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, this.y);
+                    ctx.lineTo(centerX - 18, this.y + 10);
+                    ctx.lineTo(centerX - 15, this.y + this.height);
+                    ctx.lineTo(centerX + 15, this.y + this.height);
+                    ctx.lineTo(centerX + 18, this.y + 10);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // HP 바
+                const hpBarWidth = this.width + 10;
+                const hpBarHeight = 6;
+                const hpPercentage = this.hp / this.maxHp;
+
+                ctx.fillStyle = '#333333';
+                ctx.fillRect(this.x - 5, this.y - 12, hpBarWidth, hpBarHeight);
+
+                ctx.fillStyle = hpPercentage > 0.5 ? '#FFD700' : hpPercentage > 0.25 ? '#FFA500' : '#FF4500';
+                ctx.fillRect(this.x - 5, this.y - 12, hpBarWidth * hpPercentage, hpBarHeight);
+
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(this.x - 5, this.y - 12, hpBarWidth, hpBarHeight);
+
+                // 황금 테두리 효과
+                ctx.shadowColor = '#FFD700';
+                ctx.shadowBlur = 8;
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
+                ctx.shadowBlur = 0;
+            }
+        }
+
         class Enemy extends GameObject {
             constructor(x, y) {
                 super(x, y, 30, 35, '#ff0000');
@@ -371,111 +1254,402 @@
             draw() {
                 const centerX = this.x + this.width / 2;
                 const centerY = this.y + this.height / 2;
-                
-                if (this.type === 0) {
-                    // Red enemy - aggressive design
-                    ctx.fillStyle = '#8B0000';
-                    ctx.beginPath();
-                    ctx.ellipse(centerX, centerY, 10, 15, 0, 0, 2 * Math.PI);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#FF0000';
-                    ctx.beginPath();
-                    ctx.moveTo(centerX, this.y + this.height);
-                    ctx.lineTo(centerX - 8, this.y + 5);
-                    ctx.lineTo(centerX + 8, this.y + 5);
-                    ctx.closePath();
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#FF4500';
-                    ctx.beginPath();
-                    ctx.moveTo(this.x, centerY - 5);
-                    ctx.lineTo(this.x - 8, centerY);
-                    ctx.lineTo(this.x + 3, centerY + 5);
-                    ctx.closePath();
-                    ctx.fill();
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(this.x + this.width, centerY - 5);
-                    ctx.lineTo(this.x + this.width + 8, centerY);
-                    ctx.lineTo(this.x + this.width - 3, centerY + 5);
-                    ctx.closePath();
-                    ctx.fill();
-                    
-                } else if (this.type === 1) {
-                    // Purple enemy - sleek design
-                    ctx.fillStyle = '#4B0082';
-                    ctx.beginPath();
-                    ctx.ellipse(centerX, centerY, 8, 16, 0, 0, 2 * Math.PI);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#8A2BE2';
-                    ctx.beginPath();
-                    ctx.moveTo(centerX, this.y + this.height);
-                    ctx.lineTo(centerX - 6, this.y);
-                    ctx.lineTo(centerX + 6, this.y);
-                    ctx.closePath();
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#9932CC';
-                    ctx.beginPath();
-                    ctx.ellipse(this.x + 3, centerY, 3, 8, Math.PI / 4, 0, 2 * Math.PI);
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.ellipse(this.x + this.width - 3, centerY, 3, 8, -Math.PI / 4, 0, 2 * Math.PI);
-                    ctx.fill();
-                    
-                } else {
-                    // Orange enemy - heavy design
-                    ctx.fillStyle = '#CC4400';
-                    ctx.fillRect(centerX - 8, this.y + 5, 16, 25);
-                    
-                    ctx.fillStyle = '#FF6600';
-                    ctx.beginPath();
-                    ctx.moveTo(centerX, this.y + this.height);
-                    ctx.lineTo(centerX - 10, this.y + 10);
-                    ctx.lineTo(centerX - 5, this.y);
-                    ctx.lineTo(centerX + 5, this.y);
-                    ctx.lineTo(centerX + 10, this.y + 10);
-                    ctx.closePath();
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#FF8C00';
-                    ctx.fillRect(this.x - 5, centerY - 3, 8, 6);
-                    ctx.fillRect(this.x + this.width - 3, centerY - 3, 8, 6);
+
+                // 값 유효성 검사
+                if (!isFinite(centerX) || !isFinite(centerY) || !isFinite(this.x) || !isFinite(this.y) ||
+                    !isFinite(this.width) || !isFinite(this.height)) {
+                    return; // 잘못된 값이면 그리기 중단
                 }
-                
-                // Enemy engine glow
-                ctx.fillStyle = '#FF0000';
-                ctx.globalAlpha = 0.6;
-                ctx.beginPath();
-                ctx.ellipse(centerX, this.y + this.height + 3, 4, 6, 0, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.globalAlpha = 1.0;
+
+                ctx.save();
+
+                if (this.type === 0) {
+                    // German Messerschmitt Bf 109 style (larger and more detailed)
+
+                    // Engine exhaust (larger)
+                    const exhaustGradient = ctx.createLinearGradient(centerX, this.y + this.height, centerX, this.y + this.height + 10);
+                    exhaustGradient.addColorStop(0, '#ff6600');
+                    exhaustGradient.addColorStop(0.5, '#ff4400');
+                    exhaustGradient.addColorStop(1, 'transparent');
+                    ctx.fillStyle = exhaustGradient;
+                    ctx.fillRect(centerX - 4, this.y + this.height, 8, 10);
+
+                    // Main fuselage (dark gray with better contrast)
+                    const fuselageGradient = ctx.createLinearGradient(centerX - 10, centerY, centerX + 10, centerY);
+                    fuselageGradient.addColorStop(0, '#2a2a2a');
+                    fuselageGradient.addColorStop(0.5, '#4a4a4a');
+                    fuselageGradient.addColorStop(1, '#2a2a2a');
+                    ctx.fillStyle = fuselageGradient;
+                    ctx.fillRect(centerX - 8, this.y + 6, 16, 30);
+
+                    // Engine cowling
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.fillRect(centerX - 6, this.y + 2, 12, 8);
+
+                    // Wings (larger and more realistic)
+                    const wingGradient = ctx.createLinearGradient(this.x - 20, centerY, this.x + this.width + 20, centerY);
+                    wingGradient.addColorStop(0, '#3a3a3a');
+                    wingGradient.addColorStop(0.5, '#5a5a5a');
+                    wingGradient.addColorStop(1, '#3a3a3a');
+                    ctx.fillStyle = wingGradient;
+
+                    // Left wing
+                    ctx.fillRect(this.x - 16, this.y + 18, 20, 8);
+                    // Right wing
+                    ctx.fillRect(this.x + this.width - 4, this.y + 18, 20, 8);
+
+                    // Nose/propeller area
+                    ctx.fillStyle = '#5a5a5a';
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, this.y);
+                    ctx.lineTo(centerX - 6, this.y + 10);
+                    ctx.lineTo(centerX + 6, this.y + 10);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // German Balkenkreuz (Iron Cross)
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(centerX - 1, this.y + 12, 2, 12);
+                    ctx.fillRect(centerX - 6, this.y + 17, 12, 2);
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(centerX - 5, this.y + 17.5, 4, 1);
+                    ctx.fillRect(centerX + 1, this.y + 17.5, 4, 1);
+
+                    // Wing guns
+                    ctx.fillStyle = '#ff4444';
+                    ctx.fillRect(this.x - 14, this.y + 20, 2, 4);
+                    ctx.fillRect(this.x + this.width + 12, this.y + 20, 2, 4);
+
+                } else if (this.type === 1) {
+                    // Japanese Mitsubishi A6M Zero style (larger and more detailed)
+
+                    // Engine exhaust
+                    const exhaustGradient = ctx.createLinearGradient(centerX, this.y + this.height, centerX, this.y + this.height + 10);
+                    exhaustGradient.addColorStop(0, '#ff6600');
+                    exhaustGradient.addColorStop(0.5, '#ff4400');
+                    exhaustGradient.addColorStop(1, 'transparent');
+                    ctx.fillStyle = exhaustGradient;
+                    ctx.fillRect(centerX - 3, this.y + this.height, 6, 10);
+
+                    // Main fuselage (olive/dark green)
+                    const fuselageGradient = ctx.createLinearGradient(centerX - 8, centerY, centerX + 8, centerY);
+                    fuselageGradient.addColorStop(0, '#2a3a2a');
+                    fuselageGradient.addColorStop(0.5, '#3a4a3a');
+                    fuselageGradient.addColorStop(1, '#2a3a2a');
+                    ctx.fillStyle = fuselageGradient;
+                    ctx.fillRect(centerX - 7, this.y + 4, 14, 32);
+
+                    // Engine cowling
+                    ctx.fillStyle = '#1a2a1a';
+                    ctx.fillRect(centerX - 5, this.y + 1, 10, 8);
+
+                    // Wings (longer, typical of Zero)
+                    const wingGradient = ctx.createLinearGradient(this.x - 18, centerY, this.x + this.width + 18, centerY);
+                    wingGradient.addColorStop(0, '#3a4a3a');
+                    wingGradient.addColorStop(0.5, '#4a5a4a');
+                    wingGradient.addColorStop(1, '#3a4a3a');
+                    ctx.fillStyle = wingGradient;
+
+                    // Left wing (longer)
+                    ctx.fillRect(this.x - 18, this.y + 16, 22, 7);
+                    // Right wing
+                    ctx.fillRect(this.x + this.width - 4, this.y + 16, 22, 7);
+
+                    // Nose
+                    ctx.fillStyle = '#4a5a4a';
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, this.y);
+                    ctx.lineTo(centerX - 5, this.y + 8);
+                    ctx.lineTo(centerX + 5, this.y + 8);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Japanese Hinomaru (Rising Sun)
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(centerX, this.y + 18, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#cc0000';
+                    ctx.beginPath();
+                    ctx.arc(centerX, this.y + 18, 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Wing guns
+                    ctx.fillStyle = '#ffaa44';
+                    ctx.fillRect(this.x - 16, this.y + 18, 2, 3);
+                    ctx.fillRect(this.x + this.width + 14, this.y + 18, 2, 3);
+
+                } else {
+                    // Italian/Other Axis Macchi C.202 style (larger and more detailed)
+
+                    // Engine exhaust
+                    const exhaustGradient = ctx.createLinearGradient(centerX, this.y + this.height, centerX, this.y + this.height + 10);
+                    exhaustGradient.addColorStop(0, '#ff6600');
+                    exhaustGradient.addColorStop(0.5, '#ff4400');
+                    exhaustGradient.addColorStop(1, 'transparent');
+                    ctx.fillStyle = exhaustGradient;
+                    ctx.fillRect(centerX - 4, this.y + this.height, 8, 10);
+
+                    // Main fuselage (sand/brown camo)
+                    const fuselageGradient = ctx.createLinearGradient(centerX - 10, centerY, centerX + 10, centerY);
+                    fuselageGradient.addColorStop(0, '#4a3a2a');
+                    fuselageGradient.addColorStop(0.5, '#5a4a3a');
+                    fuselageGradient.addColorStop(1, '#4a3a2a');
+                    ctx.fillStyle = fuselageGradient;
+                    ctx.fillRect(centerX - 8, this.y + 5, 16, 30);
+
+                    // Engine cowling
+                    ctx.fillStyle = '#3a2a1a';
+                    ctx.fillRect(centerX - 6, this.y + 2, 12, 8);
+
+                    // Wings
+                    const wingGradient = ctx.createLinearGradient(this.x - 17, centerY, this.x + this.width + 17, centerY);
+                    wingGradient.addColorStop(0, '#5a4a3a');
+                    wingGradient.addColorStop(0.5, '#6a5a4a');
+                    wingGradient.addColorStop(1, '#5a4a3a');
+                    ctx.fillStyle = wingGradient;
+
+                    // Left wing
+                    ctx.fillRect(this.x - 15, this.y + 17, 19, 8);
+                    // Right wing
+                    ctx.fillRect(this.x + this.width - 4, this.y + 17, 19, 8);
+
+                    // Nose
+                    ctx.fillStyle = '#6a5a4a';
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, this.y);
+                    ctx.lineTo(centerX - 6, this.y + 9);
+                    ctx.lineTo(centerX + 6, this.y + 9);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Italian fasces symbol (simplified)
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(centerX - 4, this.y + 15, 8, 2);
+                    ctx.fillRect(centerX - 1, this.y + 13, 2, 6);
+                    ctx.fillStyle = '#006600';
+                    ctx.fillRect(centerX - 3, this.y + 15.5, 6, 1);
+
+                    // Wing guns
+                    ctx.fillStyle = '#ffaa00';
+                    ctx.fillRect(this.x - 13, this.y + 19, 2, 4);
+                    ctx.fillRect(this.x + this.width + 11, this.y + 19, 2, 4);
+                }
+
+                ctx.restore();
             }
         }
-        
-        class Star {
+
+        class UAPEnemy extends GameObject {
+            constructor() {
+                // 구름 위치에서 스폰 (구름과 비슷한 위치)
+                const cloudX = Math.random() * canvas.width;
+                const cloudY = Math.random() * canvas.height * 0.7; // 화면 상단 70%에서 스폰
+                super(cloudX, cloudY, 30, 20, '#silver');
+
+                this.speed = 3 + Math.random() * 3; // 더 빠르게
+                this.rotationAngle = 0;
+                this.glowIntensity = 0;
+                this.isUAP = true;
+                this.isEmerging = true; // 등장 상태
+                this.emergingTimer = 0;
+                this.attackMode = false;
+                this.shootTimer = 0;
+
+                // 초기에는 숨어있음 (투명)
+                this.alpha = 0;
+                this.originalY = this.y;
+
+                // 잠시 후 플레이어를 추적하기 시작
+                this.updateTarget();
+            }
+
+            updateTarget() {
+                // 플레이어를 향한 방향 계산
+                const dx = (player.x + player.width / 2) - (this.x + this.width / 2);
+                const dy = (player.y + player.height / 2) - (this.y + this.height / 2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance > 0) {
+                    this.vx = (dx / distance) * this.speed;
+                    this.vy = (dy / distance) * this.speed;
+                }
+            }
+
+            update() {
+                this.emergingTimer++;
+
+                if (this.isEmerging) {
+                    // 구름에서 서서히 등장 (2초간)
+                    if (this.emergingTimer < 120) {
+                        this.alpha = Math.min(1, this.emergingTimer / 60);
+                        // 살짝 위아래로 움직임 (등장 효과)
+                        this.y = this.originalY + Math.sin(this.emergingTimer * 0.1) * 5;
+                    } else {
+                        // 등장 완료, 공격 모드 시작
+                        this.isEmerging = false;
+                        this.attackMode = true;
+                        this.alpha = 1;
+                        this.updateTarget(); // 플레이어 위치 재계산
+                    }
+                } else if (this.attackMode) {
+                    // 공격 모드: 플레이어를 향해 빠르게 돌진
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    // 주기적으로 방향 업데이트 (유도 미사일처럼)
+                    if (this.emergingTimer % 30 === 0) {
+                        this.updateTarget();
+                    }
+
+                    // UAP 발사 (매 60프레임마다)
+                    this.shootTimer++;
+                    if (this.shootTimer >= 60) {
+                        this.shoot();
+                        this.shootTimer = 0;
+                    }
+                }
+
+                // 회전 효과
+                this.rotationAngle += 0.1;
+                this.glowIntensity = Math.sin(Date.now() * 0.01) * 0.5 + 0.5;
+
+                // 화면 밖으로 나가면 제거 대상
+                if (this.x < -50 || this.x > canvas.width + 50 ||
+                    this.y < -50 || this.y > canvas.height + 50) {
+                    return true; // 제거 신호
+                }
+                return false;
+            }
+
+            shoot() {
+                // UAP 에너지 탄환 발사
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+
+                // 플레이어를 향한 에너지 탄환
+                const dx = (player.x + player.width / 2) - centerX;
+                const dy = (player.y + player.height / 2) - centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance > 0) {
+                    const bulletSpeed = 4;
+                    const vx = (dx / distance) * bulletSpeed;
+                    const vy = (dy / distance) * bulletSpeed;
+
+                    // UAP 전용 탄환 생성
+                    enemies.push(new UAPBullet(centerX - 2, centerY, vx, vy));
+                }
+            }
+
+            draw() {
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(this.rotationAngle);
+
+                // UAP 몸체 (원반형)
+                const uapGradient = ctx.createRadialGradient(0, 0, 5, 0, 0, 18);
+                uapGradient.addColorStop(0, '#E6E6FA');
+                uapGradient.addColorStop(0.4, '#C0C0C0');
+                uapGradient.addColorStop(0.8, '#808080');
+                uapGradient.addColorStop(1, '#404040');
+
+                ctx.fillStyle = uapGradient;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 15, 8, 0, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // 상단 돔
+                const domeGradient = ctx.createRadialGradient(0, -3, 2, 0, -3, 10);
+                domeGradient.addColorStop(0, '#F0F8FF');
+                domeGradient.addColorStop(0.6, '#B0C4DE');
+                domeGradient.addColorStop(1, '#778899');
+
+                ctx.fillStyle = domeGradient;
+                ctx.beginPath();
+                ctx.ellipse(0, -3, 10, 5, 0, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // 주변 글로우 효과
+                ctx.shadowColor = '#00FFFF';
+                ctx.shadowBlur = 12 * this.glowIntensity;
+                ctx.fillStyle = `rgba(0, 255, 255, ${0.4 * this.glowIntensity})`;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 18, 10, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // 빛 점들
+                ctx.fillStyle = '#00FFFF';
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * Math.PI / 3) + this.rotationAngle;
+                    const lightX = Math.cos(angle) * 12;
+                    const lightY = Math.sin(angle) * 7;
+                    ctx.beginPath();
+                    ctx.arc(lightX, lightY, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        class Cloud {
             constructor() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
-                this.speed = 1 + Math.random() * 2;
-                this.size = Math.random() * 2;
+                this.speed = 0.3 + Math.random() * 0.8; // 구름은 더 천천히
+                this.size = 20 + Math.random() * 40; // 구름은 더 크게
+                this.alpha = 0.3 + Math.random() * 0.4; // 구름은 더 투명하게
+                this.offsetX = Math.random() * 10; // 수평 이동
             }
-            
+
             update() {
                 this.y += this.speed;
-                if (this.y > canvas.height) {
-                    this.y = 0;
+                this.x += Math.sin(Date.now() * 0.001 + this.offsetX) * 0.2; // 부드러운 수평 움직임
+
+                if (this.y > canvas.height + 50) {
+                    this.y = -50;
                     this.x = Math.random() * canvas.width;
                 }
             }
-            
+
             draw() {
-                ctx.fillStyle = 'white';
-                ctx.fillRect(this.x, this.y, this.size, this.size);
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+
+                // 구름 그리기 (여러 원을 겹쳐서 구름 모양)
+                const cloudGradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+                cloudGradient.addColorStop(0, '#ffffff');
+                cloudGradient.addColorStop(0.7, '#e6e6e6');
+                cloudGradient.addColorStop(1, 'rgba(200, 200, 200, 0)');
+
+                ctx.fillStyle = cloudGradient;
+
+                // 메인 구름 몸체 (여러 원으로 구성)
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(this.x - this.size * 0.3, this.y, this.size * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(this.x + this.size * 0.3, this.y, this.size * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y - this.size * 0.2, this.size * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
             }
         }
+
         
         class Item extends GameObject {
             constructor(x, y) {
@@ -570,6 +1744,7 @@
             constructor(side) {
                 super(0, 0, 15, 20, '#00aa00');
                 this.side = side;
+                this.lastShot = 0; // 개별 발사 타이머
                 if (side === 'left') {
                     this.offsetX = -30;
                     this.offsetY = 10;
@@ -631,14 +1806,15 @@
         }
         
         const player = new Player();
-        const bullets = [];
-        const enemies = [];
-        const stars = [];
-        const items = [];
-        const sidekickBullets = [];
-        
-        for (let i = 0; i < 50; i++) {
-            stars.push(new Star());
+        let bullets = [];
+        let enemies = [];
+        const clouds = []; // 구름
+        let items = [];
+        let sidekickBullets = [];
+
+        // 구름 초기화 (개수 줄임)
+        for (let i = 0; i < 15; i++) {
+            clouds.push(new Cloud());
         }
         
         let lastShot = 0;
@@ -646,33 +1822,264 @@
         let itemSpawnTimer = 0;
         
         function spawnEnemy() {
-            const x = Math.random() * (canvas.width - 25);
-            enemies.push(new Enemy(x, -25));
+            // 플레이어 위치와 속도를 고려한 스폰 위치 계산
+            const playerCenterX = player.x + player.width / 2;
+            const playerSpeed = currentPlayerSpeed;
+
+            // 적이 화면을 가로지르는 시간 계산 (대략적)
+            const enemySpeed = 2 + Math.random() * 2; // 적의 기본 속도
+            const timeToReachPlayer = canvas.height / (enemySpeed * enemySpeedMultiplier);
+
+            // 플레이어가 이동할 수 있는 최대 거리
+            const maxPlayerMovement = playerSpeed * timeToReachPlayer;
+
+            // 플레이어가 도달 가능한 범위 계산
+            const minReachableX = Math.max(0, playerCenterX - maxPlayerMovement);
+            const maxReachableX = Math.min(canvas.width, playerCenterX + maxPlayerMovement);
+
+            // 도달 가능한 범위에서 적 스폰 (약간의 여유 추가)
+            const safetyMargin = 50; // 여유 공간
+            const spawnMinX = Math.max(0, minReachableX - safetyMargin);
+            const spawnMaxX = Math.min(canvas.width - 25, maxReachableX + safetyMargin);
+
+            // 최소 스폰 범위 보장
+            const minSpawnRange = 200;
+            let finalSpawnRange = spawnMaxX - spawnMinX;
+
+            if (finalSpawnRange < minSpawnRange) {
+                // 범위가 너무 좁으면 플레이어 중심으로 최소 범위 확보
+                const centerX = (spawnMinX + spawnMaxX) / 2;
+                const halfRange = minSpawnRange / 2;
+                const newMinX = Math.max(0, centerX - halfRange);
+                const newMaxX = Math.min(canvas.width - 25, centerX + halfRange);
+
+                const x = newMinX + Math.random() * (newMaxX - newMinX);
+                enemies.push(new Enemy(x, -25));
+            } else {
+                const x = spawnMinX + Math.random() * (spawnMaxX - spawnMinX);
+                enemies.push(new Enemy(x, -25));
+            }
         }
         
         function updateDifficulty() {
-            const newDifficultyLevel = Math.min(Math.floor(score / 500) + 1, maxDifficultyLevel);
-            
-            if (newDifficultyLevel > difficultyLevel) {
+            // 스테이지별 필요 점수: 1→2(500), 2→3(1500), 3→4(3000), 4→5(4500)...
+            let newDifficultyLevel = 1;
+            const stageThresholds = [];
+
+            // 스테이지 2: 500점
+            // 스테이지 3: 1500점 (500 + 1000)
+            // 스테이지 4: 3000점 (1500 + 1500)
+            // 스테이지 5: 4500점 (3000 + 1500)
+            // 패턴: n번째 스테이지 = (n-1) * n * 250
+            for (let stage = 2; stage <= 100; stage++) {
+                const threshold = (stage - 1) * stage * 250;
+                stageThresholds.push(threshold);
+            }
+
+            for (let i = 0; i < stageThresholds.length; i++) {
+                if (score >= stageThresholds[i]) {
+                    newDifficultyLevel = i + 2; // i+2 because stage 1 starts at 0 points
+                } else {
+                    break;
+                }
+            }
+
+            // 보스가 활성화되어 있으면 스테이지 진행을 막음
+            if (newDifficultyLevel > difficultyLevel && !bossActive) {
                 difficultyLevel = newDifficultyLevel;
-                
+
                 // 적 스폰 속도 (단계별 3프레임 감소, 최소 8프레임)
                 currentEnemySpawnRate = Math.max(8, baseEnemySpawnRate - (difficultyLevel * 3));
-                
+
                 // 적 이동 속도 (단계별 5% 증가, 최대 2배)
                 enemySpeedMultiplier = Math.min(2.0, 1.0 + (difficultyLevel * 0.05));
-                
+
                 // 플레이어 이동 속도 (단계별 3% 증가, 최대 1.6배)
                 currentPlayerSpeed = Math.min(basePlayerSpeed * 1.6, basePlayerSpeed * (1.0 + difficultyLevel * 0.03));
-                
-                // 플레이어 샇 속도 (단계별 4ms 감소, 최소 50ms)
-                currentShotDelay = rapidFireActive ? 
-                    Math.max(25, baseShotDelay - (difficultyLevel * 4)) / 3 : 
-                    Math.max(50, baseShotDelay - (difficultyLevel * 4));
-                
-                // 난이도 증가 알림
-                showDifficultyMessage();
+
+                // 플레이어 샇 속도 (단계별 3ms 감소, 최소 30ms)
+                currentShotDelay = rapidFireActive ?
+                    Math.max(15, baseShotDelay - (difficultyLevel * 3)) / 3 :
+                    Math.max(30, baseShotDelay - (difficultyLevel * 3));
+
+                // 스테이지 알림 먼저 표시
+                showStageMessage();
+
+                // 보스 소환 (2초 후, HP = 스테이지 점수)
+                setTimeout(() => {
+                    if (gameRunning && !gamePaused) { // 게임이 계속 진행 중일 때만 보스 소환
+                        const stageScore = difficultyLevel * 500;
+                        spawnBoss(stageScore);
+                    }
+                }, 2000);
             }
+        }
+
+        function spawnBoss(stageScore) {
+            if (!bossActive) {
+                bossActive = true;
+                currentBoss = new BossEnemy(stageScore);
+                enemies.push(currentBoss);
+
+                // 보스 등장 시 일반 적 증가 (3-5마리 추가 스폰)
+                const extraEnemyCount = 3 + Math.floor(Math.random() * 3);
+                for (let i = 0; i < extraEnemyCount; i++) {
+                    setTimeout(() => {
+                        const x = Math.random() * (canvas.width - 25);
+                        enemies.push(new Enemy(x, -25));
+                    }, i * 150); // 150ms 간격으로 스폰
+                }
+
+                showBossMessage();
+            }
+        }
+
+        function spawnEliteEnemy(hp) {
+            // 플레이어가 도달 가능한 범위에서 강화 적 스폰
+            const playerCenterX = player.x + player.width / 2;
+            const playerSpeed = currentPlayerSpeed;
+            const enemySpeed = 1.5 + Math.random() * 1;
+            const timeToReachPlayer = canvas.height / (enemySpeed * enemySpeedMultiplier);
+            const maxPlayerMovement = playerSpeed * timeToReachPlayer;
+
+            const minReachableX = Math.max(0, playerCenterX - maxPlayerMovement);
+            const maxReachableX = Math.min(canvas.width, playerCenterX + maxPlayerMovement);
+
+            const safetyMargin = 50;
+            const spawnMinX = Math.max(0, minReachableX - safetyMargin);
+            const spawnMaxX = Math.min(canvas.width - 40, maxReachableX + safetyMargin);
+
+            const x = spawnMinX + Math.random() * (spawnMaxX - spawnMinX);
+            enemies.push(new EliteEnemy(x, -45, hp));
+        }
+
+        function showBossMessage() {
+            const message = document.createElement('div');
+            const canvasRect = canvas.getBoundingClientRect();
+            const centerX = canvasRect.left + canvasRect.width / 2;
+            const centerY = canvasRect.top + canvasRect.height / 2;
+
+            message.style.cssText = `
+                position: fixed;
+                top: ${centerY}px;
+                left: ${centerX}px;
+                transform: translate(-50%, -50%);
+                color: #ff0000;
+                font-size: 36px;
+                font-weight: bold;
+                z-index: 1001;
+                text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+                pointer-events: none;
+                animation: bossWarning 2.5s ease-in-out;
+            `;
+            message.textContent = `⚠️ STAGE ${difficultyLevel} BOSS ⚠️`;
+
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes bossWarning {
+                    0%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                    10%, 90% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+                    50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                if (document.body.contains(message)) {
+                    document.body.removeChild(message);
+                }
+                if (document.head.contains(style)) {
+                    document.head.removeChild(style);
+                }
+            }, 2500);
+        }
+
+        function showStageClearMessage() {
+            const message = document.createElement('div');
+            const canvasRect = canvas.getBoundingClientRect();
+            const centerX = canvasRect.left + canvasRect.width / 2;
+            const centerY = canvasRect.top + canvasRect.height / 2 - 50; // Slightly above center
+
+            message.style.cssText = `
+                position: fixed;
+                top: ${centerY}px;
+                left: ${centerX}px;
+                transform: translate(-50%, -50%);
+                color: #00ff00;
+                font-size: 32px;
+                font-weight: bold;
+                z-index: 1002;
+                text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+                pointer-events: none;
+                animation: stageClear 1.8s ease-in-out;
+            `;
+            message.textContent = `🎉 STAGE ${difficultyLevel} CLEAR! 🎉`;
+
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes stageClear {
+                    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                    20%, 80% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+                    100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                if (document.body.contains(message)) {
+                    document.body.removeChild(message);
+                }
+                if (document.head.contains(style)) {
+                    document.head.removeChild(style);
+                }
+            }, 1800);
+        }
+
+        function showStageMessage() {
+            const message = document.createElement('div');
+            const canvasRect = canvas.getBoundingClientRect();
+            const centerX = canvasRect.left + canvasRect.width / 2;
+            const centerY = canvasRect.top + canvasRect.height / 2 + 50; // Slightly below center
+
+            message.style.cssText = `
+                position: fixed;
+                top: ${centerY}px;
+                left: ${centerX}px;
+                transform: translate(-50%, -50%);
+                color: #ffd700;
+                font-size: 28px;
+                font-weight: bold;
+                z-index: 1000;
+                text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+                pointer-events: none;
+                animation: stageUp 1.5s ease-in-out;
+            `;
+            message.textContent = `⭐ STAGE ${difficultyLevel} ⭐`;
+
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes stageUp {
+                    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                    20%, 80% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+                    100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                if (document.body.contains(message)) {
+                    document.body.removeChild(message);
+                }
+                if (document.head.contains(style)) {
+                    document.head.removeChild(style);
+                }
+            }, 1500);
         }
         
         function showDifficultyMessage() {
@@ -707,29 +2114,91 @@
             }, isMaxLevel ? 3000 : 2000);
         }
         
+        function spawnKamikazeEnemy() {
+            kamikazeActive = true;
+
+            // 플레이어 위치 기준으로 화면 가장자리에서 스폰
+            let spawnX, spawnY;
+            const playerCenterX = player.x + player.width / 2;
+            const playerCenterY = player.y + player.height / 2;
+
+            // 랜덤하게 4방향 중 하나에서 스폰
+            const side = Math.floor(Math.random() * 4);
+            switch(side) {
+                case 0: // 위쪽
+                    spawnX = Math.random() * canvas.width;
+                    spawnY = -50;
+                    break;
+                case 1: // 아래쪽
+                    spawnX = Math.random() * canvas.width;
+                    spawnY = canvas.height + 50;
+                    break;
+                case 2: // 왼쪽
+                    spawnX = -50;
+                    spawnY = Math.random() * canvas.height;
+                    break;
+                case 3: // 오른쪽
+                    spawnX = canvas.width + 50;
+                    spawnY = Math.random() * canvas.height;
+                    break;
+            }
+
+            kamikazeEnemy = new KamikazeEnemy(spawnX, spawnY, playerCenterX, playerCenterY);
+            enemies.push(kamikazeEnemy);
+        }
+
         function update() {
             if (!gameRunning || gamePaused) return;
             
             player.update();
             
             if (Date.now() - lastShot > currentShotDelay) {
-                if (multiShotActive) {
-                    bullets.push(new Bullet(player.x + player.width / 2 - 2, player.y - 5, homingActive, pierceActive));
-                    bullets.push(new Bullet(player.x + player.width / 2 - 10, player.y - 5, homingActive, pierceActive));
-                    bullets.push(new Bullet(player.x + player.width / 2 + 6, player.y - 5, homingActive, pierceActive));
-                } else {
-                    bullets.push(new Bullet(player.x + player.width / 2 - 2, player.y - 5, homingActive, pierceActive));
-                }
+                // 기본 더블 샷
+                bullets.push(new Bullet(player.x + player.width / 2 - 8, player.y - 5));
+                bullets.push(new Bullet(player.x + player.width / 2 + 4, player.y - 5));
                 lastShot = Date.now();
             }
             
-            // Sidekick shooting
-            if (Date.now() - lastSidekickShot > 200 && sidekicks.length > 0) {
-                sidekicks.forEach(sidekick => {
-                    sidekickBullets.push(new Bullet(sidekick.x + sidekick.width / 2 - 2, sidekick.y - 5));
-                });
-                lastSidekickShot = Date.now();
-            }
+            // Sidekick shooting with individual item abilities
+            sidekicks.forEach((sidekick, index) => {
+                // 각 사이드킥은 해당 인덱스의 아이템 효과를 사용
+                const hasItem = playerItems.length > index;
+
+                if (hasItem) {
+                    const item = playerItems[index];
+                    const isMultiShot = item.type === 'multiShot';
+                    const isHoming = item.type === 'homing';
+                    const isPierce = item.type === 'pierce';
+                    const isRapidFire = item.type === 'rapidFire';
+
+                    // 각 아이템 유형별 발사 간격
+                    const baseDelay = 200;
+                    let currentDelay = baseDelay;
+
+                    if (isRapidFire) {
+                        currentDelay = isHoming ? 230 : 70; // 연사 + 호밍조합
+                    } else if (isHoming) {
+                        currentDelay = 670; // 호밍만
+                    }
+
+                    if (Date.now() - sidekick.lastShot > currentDelay) {
+                        if (isMultiShot) {
+                            sidekickBullets.push(new Bullet(sidekick.x + sidekick.width / 2 - 6, sidekick.y - 5, isHoming, isPierce));
+                            sidekickBullets.push(new Bullet(sidekick.x + sidekick.width / 2 - 2, sidekick.y - 5, isHoming, isPierce));
+                            sidekickBullets.push(new Bullet(sidekick.x + sidekick.width / 2 + 2, sidekick.y - 5, isHoming, isPierce));
+                        } else {
+                            sidekickBullets.push(new Bullet(sidekick.x + sidekick.width / 2 - 2, sidekick.y - 5, isHoming, isPierce));
+                        }
+                        sidekick.lastShot = Date.now();
+                    }
+                } else {
+                    // 아이템이 없는 사이드킥은 기본 총알 발사
+                    if (Date.now() - sidekick.lastShot > 200) {
+                        sidekickBullets.push(new Bullet(sidekick.x + sidekick.width / 2 - 2, sidekick.y - 5, false, false));
+                        sidekick.lastShot = Date.now();
+                    }
+                }
+            });
             
             // Update sidekicks
             sidekicks.forEach(sidekick => {
@@ -755,13 +2224,24 @@
             });
             
             enemies.forEach((enemy, enemyIndex) => {
-                enemy.update();
-                if (enemy.y > canvas.height) {
+                const shouldRemove = enemy.update();
+                if ((enemy.y > canvas.height && !enemy.isBoss && !enemy.isBossBullet) ||
+                    (enemy.isUAPBullet && shouldRemove)) { // UAP 총알은 update에서 반환되는 값으로 제거 결정
                     enemies.splice(enemyIndex, 1);
                 }
                 
                 if (player.collidesWith(enemy)) {
-                    gameOver();
+                    if (enemy.isBossBullet || enemy.isUAPBullet) {
+                        // 보스 탄환 또는 UAP 탄환과 충돌 - 플레이어 죽음
+                        enemies.splice(enemyIndex, 1);
+                        gameOver();
+                    } else if (enemy.isUAP) {
+                        // UAP 적 자체와 충돌 - 플레이어는 죽지 않음 (UAP는 총알로만 위험함)
+                        // UAP는 제거되지도 않음
+                    } else {
+                        // 일반 적 또는 보스와 충돌 - 플레이어 죽음
+                        gameOver();
+                    }
                 }
                 
                 // Check sidekick collisions
@@ -769,42 +2249,118 @@
                     if (sidekick.collidesWith(enemy)) {
                         createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
                         sidekicks.splice(sidekickIndex, 1);
-                        enemies.splice(enemyIndex, 1);
-                        score += 5;
-                        updateScore();
+
+                        if (enemy.isBoss) {
+                            // 보스는 사이드킥 충돌로 데미지만 입음 (즉시 죽지 않음)
+                            if (enemy.takeDamage()) {
+                                enemies.splice(enemyIndex, 1);
+                                updateScore();
+                                updateGauge();
+                            }
+                        } else {
+                            // 일반 적은 즉시 제거
+                            enemies.splice(enemyIndex, 1);
+                            if (!bossActive) { // 보스가 없을 때만 점수 증가
+                                score += 5;
+                                updateScore();
+                            }
+                        }
                     }
                 });
                 
                 bullets.forEach((bullet, bulletIndex) => {
-                    if (bullet.collidesWith(enemy) && !bullet.hitEnemies.includes(enemy)) {
-                        if (bullet.isPierce) {
-                            bullet.hitEnemies.push(enemy);
+                    if (bullet.collidesWith(enemy) && !bullet.hitEnemies.includes(enemy) &&
+                        !enemy.isBossBullet && !enemy.isUAPBullet) { // 총알류는 플레이어 총알과 충돌하지 않음
+                        if (enemy.isBoss) {
+                            // 보스는 HP 시스템 사용
+                            if (bullet.isPierce) {
+                                bullet.hitEnemies.push(enemy);
+                            } else {
+                                bullets.splice(bulletIndex, 1);
+                            }
+
+                            if (enemy.takeDamage(2)) { // 플레이어 총알 2배 데미지
+                                // 보스 처치됨
+                                enemies.splice(enemyIndex, 1);
+                                updateScore();
+                                updateGauge();
+                            }
+                        } else if (enemy.isElite) {
+                            // 강화 적은 HP 시스템 사용
+                            if (bullet.isPierce) {
+                                bullet.hitEnemies.push(enemy);
+                            } else {
+                                bullets.splice(bulletIndex, 1);
+                            }
+
+                            if (enemy.takeDamage(2)) { // 플레이어 총알 2배 데미지
+                                // 강화 적 처치됨
+                                createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                                enemies.splice(enemyIndex, 1);
+                                if (!bossActive) { // 보스가 없을 때만 점수 증가
+                                    score += 50; // 강화 적 보너스
+                                    updateScore();
+                                }
+                                specialGauge = Math.min(specialGauge + 10, maxGauge);
+                                updateGauge();
+                            }
                         } else {
-                            bullets.splice(bulletIndex, 1);
+                            // 일반 적
+                            if (bullet.isPierce) {
+                                bullet.hitEnemies.push(enemy);
+                            } else {
+                                bullets.splice(bulletIndex, 1);
+                            }
+                            createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                            enemies.splice(enemyIndex, 1);
+                            if (!bossActive) { // 보스가 없을 때만 점수 증가
+                                score += 10;
+                                updateScore();
+                            }
+                            specialGauge = Math.min(specialGauge + 5, maxGauge);
+                            updateGauge();
                         }
-                        createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
-                        enemies.splice(enemyIndex, 1);
-                        score += 10;
-                        specialGauge = Math.min(specialGauge + 5, maxGauge);
-                        updateScore();
-                        updateGauge();
                     }
                 });
                 
                 sidekickBullets.forEach((bullet, bulletIndex) => {
-                    if (bullet.collidesWith(enemy)) {
+                    if (bullet.collidesWith(enemy) && !enemy.isBossBullet && !enemy.isUAPBullet) { // 총알류는 사이드킥 총알과도 충돌하지 않음
                         createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
                         sidekickBullets.splice(bulletIndex, 1);
-                        enemies.splice(enemyIndex, 1);
-                        score += 10;
-                        specialGauge = Math.min(specialGauge + 3, maxGauge);
-                        updateScore();
-                        updateGauge();
+
+                        if (enemy.isBoss) {
+                            // 보스는 사이드킥 총알에도 데미지만 입음
+                            if (enemy.takeDamage()) {
+                                enemies.splice(enemyIndex, 1);
+                                updateScore();
+                                updateGauge();
+                            }
+                        } else if (enemy.isElite) {
+                            // 강화 적도 HP 시스템 사용
+                            if (enemy.takeDamage()) {
+                                enemies.splice(enemyIndex, 1);
+                                if (!bossActive) { // 보스가 없을 때만 점수 증가
+                                    score += 50;
+                                    updateScore();
+                                }
+                                specialGauge = Math.min(specialGauge + 10, maxGauge);
+                                updateGauge();
+                            }
+                        } else {
+                            // 일반 적은 즉시 제거
+                            enemies.splice(enemyIndex, 1);
+                            if (!bossActive) { // 보스가 없을 때만 점수 증가
+                                score += 10;
+                                updateScore();
+                            }
+                            specialGauge = Math.min(specialGauge + 3, maxGauge);
+                            updateGauge();
+                        }
                     }
                 });
             });
             
-            stars.forEach(star => star.update());
+            clouds.forEach(particle => particle.update());
             
             items.forEach((item, itemIndex) => {
                 item.update();
@@ -835,44 +2391,33 @@
                     specialAttackTimer = 0;
                 }
             }
-            
-            enemySpawnTimer++;
-            if (enemySpawnTimer > currentEnemySpawnRate) {
-                spawnEnemy();
-                enemySpawnTimer = 0;
-                
-                // 난이도에 따른 다중 스폰 (더 세밀한 단계별 조정)
-                const multiSpawnChance = Math.min(0.4, difficultyLevel * 0.02);
-                
-                if (difficultyLevel >= 3 && Math.random() < multiSpawnChance) {
-                    setTimeout(() => {
-                        const x2 = Math.random() * (canvas.width - 25);
-                        enemies.push(new Enemy(x2, -25));
-                    }, 80);
-                }
-                
-                if (difficultyLevel >= 7 && Math.random() < multiSpawnChance * 0.7) {
-                    setTimeout(() => {
-                        const x3 = Math.random() * (canvas.width - 25);
-                        enemies.push(new Enemy(x3, -25));
-                    }, 160);
-                }
-                
-                if (difficultyLevel >= 12 && Math.random() < multiSpawnChance * 0.5) {
-                    setTimeout(() => {
-                        const x4 = Math.random() * (canvas.width - 25);
-                        enemies.push(new Enemy(x4, -25));
-                    }, 240);
-                }
-                
-                if (difficultyLevel >= 17 && Math.random() < multiSpawnChance * 0.3) {
-                    setTimeout(() => {
-                        const x5 = Math.random() * (canvas.width - 25);
-                        enemies.push(new Enemy(x5, -25));
-                    }, 320);
-                }
+
+            // 화염 웨이브 업데이트
+            if (flameWaveActive) {
+                updateFlameWave();
             }
             
+            // 스테이지별 적 스폰 속도 증가 (더 빠르게)
+            const baseSpawnRate = 60; // 기본 스폰 간격 (120에서 60으로 반으로 줄임)
+            const currentSpawnRate = Math.max(15, baseSpawnRate - (difficultyLevel * 8)); // 스테이지마다 8프레임씩 빨라짐
+
+            // 적 스폰 카운터
+            enemySpawnTimer++;
+            if (enemySpawnTimer % currentSpawnRate === 0) {
+                // 스테이지별 적 개수 증가 (1-3개)
+                const enemyCount = Math.min(3, Math.floor(difficultyLevel / 2) + 1);
+                for (let i = 0; i < enemyCount; i++) {
+                    const x = Math.random() * (canvas.width - 30);
+                    enemies.push(new Enemy(x, -35));
+                }
+                enemySpawnTimer = 0;
+            }
+
+            // UAP 랜덤 스폰 (0.5% 확률)
+            if (Math.random() < 0.005 && gameRunning && !gamePaused) {
+                enemies.push(new UAPEnemy());
+            }
+
             itemSpawnTimer++;
             // 난이도가 높을수록 아이템 스폰 빈도 증가
             const itemSpawnDelay = Math.max(150, 350 - (difficultyLevel * 15));
@@ -883,9 +2428,11 @@
         }
         
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            stars.forEach(star => star.draw());
+            // 미래도시 침공 배경
+            drawCityBackground();
+
+            // 건물들과 구름 효과 그리기
+            clouds.forEach(particle => particle.draw());
             
             player.draw();
             bullets.forEach(bullet => bullet.draw());
@@ -911,12 +2458,241 @@
             difficultyLevel = 1;
             currentEnemySpawnRate = Math.max(8, baseEnemySpawnRate - (1 * 3));
             currentPlayerSpeed = Math.min(basePlayerSpeed * 1.6, basePlayerSpeed * (1.0 + 1 * 0.03));
-            currentShotDelay = Math.max(50, baseShotDelay - (1 * 4));
+            currentShotDelay = Math.max(30, baseShotDelay - (1 * 3));
             enemySpeedMultiplier = Math.min(2.0, 1.0 + (1 * 0.05));
         }
         
         function updateScore() {
             document.getElementById('score').textContent = `점수: ${score}`;
+        }
+
+        function drawCityBackground() {
+            // 푸른 바다 배경 (좌측)과 육지 (우측)
+            const seaGradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+            seaGradient.addColorStop(0, '#1e3a5f');     // 깊은 바다색
+            seaGradient.addColorStop(0.4, '#2d4a6e');   // 중간 바다색
+            seaGradient.addColorStop(0.6, '#3a5a7d');   // 연한 바다색
+            seaGradient.addColorStop(1, '#4a6a8d');     // 해안 근처
+
+            ctx.fillStyle = seaGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 육지 (해안선과 섬들)
+            drawLandMasses();
+
+            // 숲과 밭
+            drawForests();
+
+            // 군사 시설
+            drawMilitaryBuildings();
+
+            // 정적 해안선 효과
+            drawWaterEffects();
+        }
+
+        function drawLandMasses() {
+            ctx.save();
+
+            // 좌측은 푸른 바다 (배경 그라디언트로 이미 처리됨)
+
+            // 우측 해안선 (육지)
+            ctx.fillStyle = '#6a5a4a'; // 갈색 육지
+
+            // 우측 해안선 (곡선으로 자연스럽게)
+            ctx.beginPath();
+            ctx.moveTo(canvas.width * 0.65, 0);
+            ctx.lineTo(canvas.width, 0);
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.lineTo(canvas.width * 0.6, canvas.height);
+            ctx.quadraticCurveTo(canvas.width * 0.62, canvas.height * 0.8, canvas.width * 0.64, canvas.height * 0.6);
+            ctx.quadraticCurveTo(canvas.width * 0.66, canvas.height * 0.4, canvas.width * 0.63, canvas.height * 0.2);
+            ctx.quadraticCurveTo(canvas.width * 0.65, canvas.height * 0.1, canvas.width * 0.65, 0);
+            ctx.fill();
+
+            // 해변 (밝은 모래색)
+            ctx.fillStyle = '#d4c4a4';
+            ctx.beginPath();
+            ctx.moveTo(canvas.width * 0.65, 0);
+            ctx.quadraticCurveTo(canvas.width * 0.62, canvas.height * 0.1, canvas.width * 0.6, canvas.height * 0.2);
+            ctx.quadraticCurveTo(canvas.width * 0.63, canvas.height * 0.4, canvas.width * 0.61, canvas.height * 0.6);
+            ctx.quadraticCurveTo(canvas.width * 0.59, canvas.height * 0.8, canvas.width * 0.6, canvas.height);
+            ctx.lineTo(canvas.width * 0.62, canvas.height);
+            ctx.quadraticCurveTo(canvas.width * 0.64, canvas.height * 0.8, canvas.width * 0.66, canvas.height * 0.6);
+            ctx.quadraticCurveTo(canvas.width * 0.68, canvas.height * 0.4, canvas.width * 0.65, canvas.height * 0.2);
+            ctx.quadraticCurveTo(canvas.width * 0.67, canvas.height * 0.1, canvas.width * 0.65, 0);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawForests() {
+            ctx.save();
+
+            // 우측 도시 (건물들과 거리)
+
+            // 도시 블록들 (건물들)
+            const buildings = [
+                // 고층 빌딩들
+                {x: canvas.width * 0.68, y: canvas.height * 0.1, w: 25, h: 120, color: '#4a4a4a'},
+                {x: canvas.width * 0.72, y: canvas.height * 0.15, w: 20, h: 100, color: '#5a5a5a'},
+                {x: canvas.width * 0.75, y: canvas.height * 0.08, w: 30, h: 140, color: '#3a3a3a'},
+                {x: canvas.width * 0.80, y: canvas.height * 0.12, w: 22, h: 110, color: '#6a6a6a'},
+                {x: canvas.width * 0.84, y: canvas.height * 0.18, w: 18, h: 90, color: '#4a4a4a'},
+                {x: canvas.width * 0.88, y: canvas.height * 0.14, w: 28, h: 105, color: '#5a5a5a'},
+
+                // 중층 빌딩들
+                {x: canvas.width * 0.70, y: canvas.height * 0.35, w: 15, h: 60, color: '#5a5a5a'},
+                {x: canvas.width * 0.74, y: canvas.height * 0.38, w: 18, h: 55, color: '#4a4a4a'},
+                {x: canvas.width * 0.77, y: canvas.height * 0.32, w: 20, h: 70, color: '#6a6a6a'},
+                {x: canvas.width * 0.82, y: canvas.height * 0.40, w: 16, h: 50, color: '#3a3a3a'},
+                {x: canvas.width * 0.86, y: canvas.height * 0.36, w: 22, h: 65, color: '#5a5a5a'},
+
+                // 저층 빌딩들
+                {x: canvas.width * 0.69, y: canvas.height * 0.55, w: 12, h: 35, color: '#6a6a6a'},
+                {x: canvas.width * 0.73, y: canvas.height * 0.58, w: 14, h: 30, color: '#4a4a4a'},
+                {x: canvas.width * 0.76, y: canvas.height * 0.52, w: 16, h: 40, color: '#5a5a5a'},
+                {x: canvas.width * 0.81, y: canvas.height * 0.60, w: 13, h: 28, color: '#3a3a3a'},
+                {x: canvas.width * 0.85, y: canvas.height * 0.56, w: 18, h: 35, color: '#6a6a6a'},
+                {x: canvas.width * 0.89, y: canvas.height * 0.59, w: 15, h: 32, color: '#4a4a4a'}
+            ];
+
+            // 건물들 그리기
+            buildings.forEach(building => {
+                // 건물 본체
+                ctx.fillStyle = building.color;
+                ctx.fillRect(building.x, building.y, building.w, building.h);
+
+                // 건물 창문들 (노란 불빛)
+                ctx.fillStyle = '#ffdd44';
+                for (let floor = 0; floor < Math.floor(building.h / 8); floor++) {
+                    for (let window = 0; window < Math.floor(building.w / 4); window++) {
+                        if ((floor + window) % 3 !== 0) { // 일부 창문만 켜져있게
+                            const windowX = building.x + 2 + window * 4;
+                            const windowY = building.y + 2 + floor * 8;
+                            ctx.fillRect(windowX, windowY, 2, 3);
+                        }
+                    }
+                }
+            });
+
+            // 도로들
+            ctx.fillStyle = '#2a2a2a';
+            // 수직 도로
+            ctx.fillRect(canvas.width * 0.71, canvas.height * 0.1, 3, canvas.height * 0.6);
+            ctx.fillRect(canvas.width * 0.79, canvas.height * 0.1, 3, canvas.height * 0.6);
+            ctx.fillRect(canvas.width * 0.87, canvas.height * 0.1, 3, canvas.height * 0.6);
+
+            // 수평 도로
+            ctx.fillRect(canvas.width * 0.68, canvas.height * 0.30, canvas.width * 0.25, 3);
+            ctx.fillRect(canvas.width * 0.68, canvas.height * 0.50, canvas.width * 0.25, 3);
+
+            // 도시 근처 나무들 (작은 공원과 가로수)
+            ctx.fillStyle = '#2d4a2d'; // 어두운 녹색
+
+            // 작은 공원 (도시 중앙)
+            const parkTrees = [
+                {x: canvas.width * 0.75, y: canvas.height * 0.65, size: 6},
+                {x: canvas.width * 0.77, y: canvas.height * 0.67, size: 5},
+                {x: canvas.width * 0.73, y: canvas.height * 0.68, size: 7},
+                {x: canvas.width * 0.78, y: canvas.height * 0.64, size: 4},
+                {x: canvas.width * 0.76, y: canvas.height * 0.70, size: 6}
+            ];
+
+            parkTrees.forEach(tree => {
+                ctx.beginPath();
+                ctx.arc(tree.x, tree.y, tree.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 가로수 (도로변)
+            ctx.fillStyle = '#3a5a3a';
+            for (let i = 0; i < 8; i++) {
+                const treeX = canvas.width * 0.68 + i * 25;
+                const treeY = canvas.height * 0.72;
+                ctx.beginPath();
+                ctx.arc(treeX, treeY, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 해안가 나무들
+            ctx.fillStyle = '#2d4a2d';
+            for (let i = 0; i < 6; i++) {
+                const coastTreeX = canvas.width * 0.62 + i * 8;
+                const coastTreeY = canvas.height * 0.15 + i * 60;
+                ctx.beginPath();
+                ctx.arc(coastTreeX, coastTreeY, 5 + Math.sin(i) * 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        function drawMilitaryBuildings() {
+            ctx.save();
+
+            // 군사 기지 (우측 해안 상단)
+            const baseX = canvas.width * 0.78;
+            const baseY = canvas.height * 0.15;
+
+            // 군사 건물들 (정적)
+            const buildings = [
+                {x: baseX, y: baseY, w: 30, h: 20, color: '#6a6a6a'},
+                {x: baseX + 35, y: baseY, w: 25, h: 25, color: '#5a5a5a'},
+                {x: baseX, y: baseY + 30, w: 35, h: 15, color: '#7a7a7a'},
+                {x: baseX + 40, y: baseY + 30, w: 20, h: 20, color: '#6a6a6a'},
+                {x: baseX - 25, y: baseY + 15, w: 22, h: 22, color: '#5a5a5a'}
+            ];
+
+            buildings.forEach(building => {
+                ctx.fillStyle = building.color;
+                ctx.fillRect(building.x, building.y, building.w, building.h);
+
+                // 건물 디테일 (창문/문)
+                ctx.fillStyle = '#4a4a4a';
+                ctx.fillRect(building.x + 2, building.y + 2, building.w - 4, building.h - 4);
+            });
+
+            // 활주로 (회색 직사각형)
+            ctx.fillStyle = '#4a4a4a';
+            ctx.fillRect(canvas.width * 0.72, canvas.height * 0.6, 80, 8);
+
+            // 활주로 중앙선 (점선)
+            ctx.fillStyle = '#ffffff';
+            for (let x = canvas.width * 0.72; x < canvas.width * 0.72 + 80; x += 10) {
+                ctx.fillRect(x, canvas.height * 0.6 + 3, 5, 2);
+            }
+
+            // 레이더 타워
+            ctx.fillStyle = '#8a8a8a';
+            ctx.fillRect(canvas.width * 0.85, canvas.height * 0.25, 6, 15);
+            ctx.beginPath();
+            ctx.arc(canvas.width * 0.88, canvas.height * 0.25, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawWaterEffects() {
+            ctx.save();
+
+            // 정적인 물결 효과 (움직이지 않음)
+            ctx.strokeStyle = 'rgba(150, 200, 180, 0.3)';
+            ctx.lineWidth = 1;
+
+            // 해안선 정적 물결
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                const waveY = canvas.height * 0.2 + i * 80;
+                ctx.moveTo(0, waveY);
+
+                for (let x = 0; x < canvas.width * 0.6; x += 20) {
+                    const y = waveY + Math.sin(x * 0.1) * 3; // Date.now() 제거
+                    ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+
+            ctx.restore();
         }
         
         function updateGauge() {
@@ -929,12 +2705,35 @@
             specialAttackActive = true;
             specialGauge = 0;
             updateGauge();
-            
-            enemies.forEach((enemy, index) => {
+
+            // 화염 웨이브 시작
+            startFlameWave();
+
+            // 보스를 제외한 적들에게만 특수 공격 적용
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
                 createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
-                score += 50;
-            });
-            enemies.length = 0;
+
+                if (enemy.isBoss) {
+                    // 보스는 특수 공격으로 큰 데미지 (HP의 20%)
+                    const damage = Math.max(1, Math.floor(enemy.maxHp * 0.2));
+                    for (let d = 0; d < damage; d++) {
+                        if (enemy.takeDamage()) {
+                            enemies.splice(i, 1);
+                            break;
+                        }
+                    }
+                    if (!bossActive) { // 보스가 없을 때만 점수 증가
+                        score += 200; // 보스에게 데미지를 준 보너스
+                    }
+                } else {
+                    // 일반 적은 즉시 제거
+                    enemies.splice(i, 1);
+                    if (!bossActive) { // 보스가 없을 때만 점수 증가
+                        score += 50;
+                    }
+                }
+            }
             updateScore();
         }
         
@@ -961,17 +2760,46 @@
         
         function collectItem(item) {
             if (playerItems.length < maxItems) {
+                // 빈 슬롯이 있으면 추가
                 playerItems.push({
                     type: item.type,
-                    timeLeft: 10000,
                     symbol: item.symbols[item.type],
                     color: item.colors[item.type]
                 });
-                updateInventoryUI();
-                activateItemEffect(item.type);
-                
-                // Add sidekick when collecting item
-                addSidekick();
+            } else {
+                // 슬롯이 가득 찬 경우 첫 번째 아이템 제거하고 새 아이템 추가
+                const oldItem = playerItems.shift(); // 첫 번째 아이템 제거
+                deactivateItemEffect(oldItem.type);
+
+                playerItems.push({
+                    type: item.type,
+                    symbol: item.symbols[item.type],
+                    color: item.colors[item.type]
+                });
+            }
+
+            updateInventoryUI();
+            activateItemEffect(item.type);
+
+            // Add sidekick when collecting item
+            addSidekick();
+        }
+
+        function deactivateItemEffect(type) {
+            switch(type) {
+                case 'multiShot':
+                    multiShotActive = false;
+                    break;
+                case 'rapidFire':
+                    rapidFireActive = false;
+                    currentShotDelay = Math.max(30, baseShotDelay - (difficultyLevel * 3));
+                    break;
+                case 'pierce':
+                    pierceActive = false;
+                    break;
+                case 'homing':
+                    homingActive = false;
+                    break;
             }
         }
         
@@ -998,7 +2826,7 @@
                     rapidFireActive = true;
                     itemEffectTimers.rapidFire = 10000;
                     // 연사 아이템 활성시 쇇 속도 재계산
-                    currentShotDelay = Math.max(25, baseShotDelay - (difficultyLevel * 4)) / 3;
+                    currentShotDelay = Math.max(15, baseShotDelay - (difficultyLevel * 3)) / 3;
                     break;
                 case 'pierce':
                     pierceActive = true;
@@ -1012,30 +2840,8 @@
         }
         
         function updateItemEffects() {
-            for (let type in itemEffectTimers) {
-                if (itemEffectTimers[type] > 0) {
-                    itemEffectTimers[type] -= 16;
-                    if (itemEffectTimers[type] <= 0) {
-                        switch(type) {
-                            case 'multiShot':
-                                multiShotActive = false;
-                                break;
-                            case 'rapidFire':
-                                rapidFireActive = false;
-                                // 연사 아이템 비활성시 쇇 속도 재계산
-                                currentShotDelay = Math.max(50, baseShotDelay - (difficultyLevel * 4));
-                                break;
-                            case 'pierce':
-                                pierceActive = false;
-                                break;
-                            case 'homing':
-                                homingActive = false;
-                                break;
-                        }
-                        removeItemFromInventory(type);
-                    }
-                }
-            }
+            // 아이템 효과를 영구적으로 유지 (다른 아이템을 먹기 전까지)
+            // 시간 기반 비활성화 제거
         }
         
         function removeItemFromInventory(type) {
@@ -1057,21 +2863,125 @@
             }
         }
         
-        function drawSpecialAttackEffect() {
-            const alpha = 0.3 + Math.sin(specialAttackTimer * 0.5) * 0.2;
-            ctx.fillStyle = `rgba(255, 255, 0, ${alpha})`;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
+        function startFlameWave() {
+            flameWaveActive = true;
+            flameWaveHeight = 0;
+            flameWave = [];
+
+            // 화염 파티클 생성
+            for (let i = 0; i < 100; i++) {
+                flameWave.push({
+                    x: Math.random() * canvas.width,
+                    y: canvas.height + Math.random() * 50,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: -8 - Math.random() * 12,
+                    size: 3 + Math.random() * 8,
+                    life: 1.0,
+                    color: Math.random() < 0.7 ? 'orange' : 'red'
+                });
+            }
+        }
+
+        function updateFlameWave() {
+            if (!flameWaveActive) return;
+
+            flameWaveHeight += 15;
+
+            // 파티클 업데이트
+            flameWave.forEach(particle => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life -= 0.02;
+                particle.size *= 0.98;
+
+                // 바람 효과
+                particle.vx += (Math.random() - 0.5) * 0.5;
+            });
+
+            // 죽은 파티클 제거
+            flameWave = flameWave.filter(particle => particle.life > 0 && particle.size > 0.5);
+
+            // 새로운 파티클 추가
+            if (flameWaveHeight < canvas.height + 100) {
+                for (let i = 0; i < 5; i++) {
+                    flameWave.push({
+                        x: Math.random() * canvas.width,
+                        y: canvas.height - flameWaveHeight + Math.random() * 30,
+                        vx: (Math.random() - 0.5) * 6,
+                        vy: -5 - Math.random() * 15,
+                        size: 4 + Math.random() * 10,
+                        life: 1.0,
+                        color: Math.random() < 0.6 ? 'orange' : Math.random() < 0.8 ? 'red' : 'yellow'
+                    });
+                }
+            }
+
+            // 효과 종료 체크
+            if (flameWaveHeight > canvas.height + 150 && flameWave.length === 0) {
+                flameWaveActive = false;
+            }
+        }
+
+        function drawFlameWave() {
+            if (!flameWaveActive) return;
+
+            // 화염 베이스 그라디언트
+            const flameGradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - flameWaveHeight);
+            flameGradient.addColorStop(0, 'rgba(255, 100, 0, 0.8)');
+            flameGradient.addColorStop(0.3, 'rgba(255, 150, 0, 0.6)');
+            flameGradient.addColorStop(0.7, 'rgba(255, 200, 0, 0.3)');
+            flameGradient.addColorStop(1, 'transparent');
+
+            ctx.fillStyle = flameGradient;
+            ctx.fillRect(0, canvas.height - flameWaveHeight, canvas.width, flameWaveHeight);
+
+            // 파티클 그리기
+            flameWave.forEach(particle => {
+                if (particle.life > 0) {
+                    ctx.globalAlpha = particle.life;
+
+                    const colors = {
+                        orange: `hsl(${30 + Math.random() * 30}, 100%, ${50 + Math.random() * 30}%)`,
+                        red: `hsl(${0 + Math.random() * 20}, 100%, ${50 + Math.random() * 30}%)`,
+                        yellow: `hsl(${50 + Math.random() * 20}, 100%, ${60 + Math.random() * 30}%)`
+                    };
+
+                    ctx.fillStyle = colors[particle.color];
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, 2 * Math.PI);
+                    ctx.fill();
+
+                    // 글로우 효과
+                    ctx.shadowColor = colors[particle.color];
+                    ctx.shadowBlur = particle.size * 2;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size * 0.5, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            });
+
+            ctx.globalAlpha = 1.0;
+
+            // 필살기 텍스트
             ctx.fillStyle = 'white';
-            ctx.font = '24px Arial';
+            ctx.font = 'bold 28px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('필살기 발동!', canvas.width / 2, canvas.height / 2);
+            ctx.shadowColor = '#ff6600';
+            ctx.shadowBlur = 10;
+            ctx.fillText('화염 폭풍!', canvas.width / 2, 100);
+            ctx.shadowBlur = 0;
             ctx.textAlign = 'left';
+        }
+
+        function drawSpecialAttackEffect() {
+            // 기존 번쩍임 제거, 화염 웨이브로 대체
+            drawFlameWave();
         }
         
         function gameOver() {
             gameRunning = false;
-            document.getElementById('gameOver').style.display = 'block';
+            showRankingInput();
         }
         
         function restartGame() {
@@ -1081,7 +2991,7 @@
             difficultyLevel = 1;
             currentEnemySpawnRate = Math.max(8, baseEnemySpawnRate - (1 * 3));
             currentPlayerSpeed = Math.min(basePlayerSpeed * 1.6, basePlayerSpeed * (1.0 + 1 * 0.03));
-            currentShotDelay = Math.max(50, baseShotDelay - (1 * 4));
+            currentShotDelay = Math.max(30, baseShotDelay - (1 * 3));
             enemySpeedMultiplier = Math.min(2.0, 1.0 + (1 * 0.05));
             specialGauge = 0;
             specialAttackActive = false;
@@ -1105,6 +3015,8 @@
             explosions.length = 0;
             itemSpawnTimer = 0;
             lastSidekickShot = 0;
+            bossActive = false;
+            currentBoss = null;
             player.x = canvas.width / 2 - 20;
             player.y = canvas.height - 60;
             updateScore();
@@ -1169,8 +3081,144 @@
             }
         });
         
-        initializeGame();
-        gameLoop();
+        // 랭킹 시스템 함수들
+        function loadRankings() {
+            const saved = localStorage.getItem('galaxyShooterRankings');
+            if (saved) {
+                rankings = JSON.parse(saved);
+            }
+            updateLiveRankings(); // 랭킹 로드 후 표시 업데이트
+        }
+
+        function updateLiveRankings() {
+            const rankingContainer = document.getElementById('liveRankingList');
+            if (!rankingContainer) return;
+
+            rankingContainer.innerHTML = '';
+
+            if (rankings.length === 0) {
+                rankingContainer.innerHTML = `
+                    <div class="ranking-item">
+                        <span class="ranking-rank">1</span>
+                        <div>
+                            <div class="ranking-score">기록 없음</div>
+                            <div class="ranking-date">게임을 시작해보세요!</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            rankings.slice(0, 10).forEach((ranking, index) => {
+                const medalIcons = ['🥇', '🥈', '🥉'];
+                const medal = index < 3 ? medalIcons[index] : `${index + 1}`;
+
+                rankingContainer.innerHTML += `
+                    <div class="ranking-item">
+                        <span class="ranking-rank">${medal}</span>
+                        <div>
+                            <div class="ranking-score">${ranking.score.toLocaleString()}점</div>
+                            <div class="ranking-date">${ranking.name} | Stage ${ranking.stage}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function saveRankings() {
+            localStorage.setItem('galaxyShooterRankings', JSON.stringify(rankings));
+        }
+
+        function addRanking(name, score, stage) {
+            const newRecord = {
+                name: name || '무명',
+                score: score,
+                stage: stage,
+                date: new Date().toLocaleDateString('ko-KR')
+            };
+
+            rankings.push(newRecord);
+            rankings.sort((a, b) => b.score - a.score);
+            rankings = rankings.slice(0, maxRankings);
+            saveRankings();
+            updateLiveRankings(); // 실시간 랭킹 업데이트
+            return newRecord;
+        }
+
+        function showRankingInput() {
+            document.getElementById('finalScore').textContent = `최종 점수: ${score}점 (${difficultyLevel}단계)`;
+            document.getElementById('rankingModal').style.display = 'block';
+            document.getElementById('nameInput').focus();
+            displayRankings(null);
+        }
+
+        function saveScore() {
+            const name = document.getElementById('nameInput').value.trim();
+            const newRecord = addRanking(name, score, difficultyLevel);
+            document.getElementById('nameInputSection').style.display = 'none';
+            displayRankings(newRecord);
+        }
+
+        function displayRankings(newRecord) {
+            // 우측 패널도 업데이트
+            updateLiveRankings();
+
+            const rankingList = document.getElementById('rankingList');
+            rankingList.innerHTML = '<h3 style="color: #00ffff; text-align: center; margin-bottom: 15px;">🏅 명예의 전당 🏅</h3>';
+
+            if (rankings.length === 0) {
+                rankingList.innerHTML += '<div style="text-align: center; color: #999;">아직 기록이 없습니다.</div>';
+                return;
+            }
+
+            rankings.forEach((ranking, index) => {
+                const isNew = newRecord && ranking === newRecord;
+                const rankElement = document.createElement('div');
+                rankElement.className = `rankingItem ${isNew ? 'newRecord' : ''}`;
+
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+
+                rankElement.innerHTML = `
+                    <div>
+                        <span style="display: inline-block; width: 30px;">${medal}</span>
+                        <strong>${ranking.name}</strong>
+                        <span style="margin-left: 10px; color: #aaa; font-size: 12px;">${ranking.date}</span>
+                    </div>
+                    <div>
+                        <span style="color: #ffd700;">${ranking.score}점</span>
+                        <span style="margin-left: 10px; color: #00ffff;">${ranking.stage}단계</span>
+                    </div>
+                `;
+
+                rankingList.appendChild(rankElement);
+            });
+        }
+
+        function closeRanking() {
+            document.getElementById('rankingModal').style.display = 'none';
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        // Enter 키로 이름 저장
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('nameInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    saveScore();
+                }
+            });
+        });
+
+        console.log("Starting game...");
+        try {
+            loadRankings();
+            console.log("Rankings loaded");
+            initializeGame();
+            console.log("Game initialized");
+            gameLoop();
+            console.log("Game loop started");
+        } catch (error) {
+            console.error("Game initialization error:", error);
+        }
     </script>
 </body>
 </html>
